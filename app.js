@@ -171,18 +171,21 @@
     const horizon = addDays(billedOn(end), 40);
     const all = simulate(t, horizon);
 
-    // minFrom[i] = i日目以降でいちばん少ない残高
-    const minFrom = new Array(all.length);
-    for (let i = all.length - 1, m = Infinity; i >= 0; i--) {
-      m = Math.min(m, all[i].total);
-      minFrom[i] = m;
-    }
     const index = (d) => Math.round((d - t) / 86400000);
+
+    // その日に使った分が引き落とされた後〜次の給料日の前日（本当の貯金の期間）でいちばん少ない残高
+    // それより先の引き落とし（分割の先の分など）は含めない
+    const lowestAfter = (w) => {
+      const from = index(w);
+      const to = index(nextPayday(w));
+      let m = Infinity;
+      for (let i = from; i < Math.max(to, from + 1); i++) m = Math.min(m, all[i].total);
+      return m;
+    };
 
     return all.filter((d) => d.date <= end).map((d) => ({
       ...d,
-      // その日に使うと引き落とし日以降の残高が減る → 引き落とし日以降の最小残高まで使える
-      canUse: minFrom[index(billedOn(d.date))],
+      canUse: lowestAfter(billedOn(d.date)),
     }));
   }
 
@@ -191,10 +194,6 @@
     const first = new Date(t.getFullYear(), t.getMonth() + viewMonth, 1);
     const last = new Date(first.getFullYear(), first.getMonth() + 1, 0);
     $('monthTitle').textContent = `${first.getFullYear()}年${first.getMonth() + 1}月`;
-    $('prevMonth').disabled = viewMonth === 0;
-    $('nextMonth').disabled = viewMonth === MONTHS - 1;
-    $('edgePrev').disabled = viewMonth === 0;
-    $('edgeNext').disabled = viewMonth === MONTHS - 1;
 
     const byTime = new Map(days.map((d, i) => [d.date.getTime(), i]));
 
@@ -256,9 +255,9 @@
 
   function renderLabels() {
     const [w1, w2, w3] = nextWithdrawDates();
-    $('nextText').textContent = `次の引き落とし額（${md(w1)}）`;
-    $('afterText').textContent = `次の月の引き落とし額（${md(w2)}）`;
-    $('thirdText').textContent = `その次の月の引き落とし額（${md(w3)}）`;
+    $('nextText').textContent = `${md(w1)}の引き落とし額`;
+    $('afterText').textContent = `${md(w2)}の引き落とし額`;
+    $('thirdText').textContent = `${md(w3)}の引き落とし額`;
     $('nextAmount').value = state.withdrawals[monthKey(w1)] ?? '';
     $('afterAmount').value = state.withdrawals[monthKey(w2)] ?? '';
     $('thirdAmount').value = state.withdrawals[monthKey(w3)] ?? '';
@@ -377,10 +376,13 @@
     viewMonth = next;
     render();
   };
-  $('prevMonth').addEventListener('click', () => changeMonth(-1));
-  $('nextMonth').addEventListener('click', () => changeMonth(1));
-  $('edgePrev').addEventListener('click', () => changeMonth(-1));
-  $('edgeNext').addEventListener('click', () => changeMonth(1));
+  // カレンダーの左右の端（それぞれ幅の1/4）をタップして月を切り替える
+  $('calendar').addEventListener('click', (e) => {
+    const rect = $('calendar').getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    if (x < 0.25) changeMonth(-1);
+    else if (x > 0.75) changeMonth(1);
+  });
 
   // カレンダーを左右にスワイプして月を切り替える
   let touchStart = null;
