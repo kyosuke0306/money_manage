@@ -42,7 +42,7 @@
       <h2>給料</h2>
       <div class="row">
         <label>給料日<select id="payday"></select></label>
-        <label>金額（円）<input type="text" id="salary" class="money" inputmode="numeric" autocomplete="off"></label>
+        <label>金額（円）<input type="number" id="salary" inputmode="numeric" min="0" step="1"></label>
       </div>
     </section>
 
@@ -53,9 +53,9 @@
         <label>引き落とし日（締日の翌月）<select id="withdrawDay"></select></label>
       </div>
       <div class="row">
-        <label><span id="nextText">次の引き落とし額</span><input type="text" id="nextAmount" class="money" inputmode="numeric" autocomplete="off"></label>
-        <label><span id="afterText">次の月の引き落とし額</span><input type="text" id="afterAmount" class="money" inputmode="numeric" autocomplete="off"></label>
-        <label><span id="thirdText">その次の月の引き落とし額</span><input type="text" id="thirdAmount" class="money" inputmode="numeric" autocomplete="off"></label>
+        <label><span id="nextText">次の引き落とし額</span><input type="number" id="nextAmount" inputmode="numeric" min="0" step="1"></label>
+        <label><span id="afterText">次の月の引き落とし額</span><input type="number" id="afterAmount" inputmode="numeric" min="0" step="1"></label>
+        <label><span id="thirdText">その次の月の引き落とし額</span><input type="number" id="thirdAmount" inputmode="numeric" min="0" step="1"></label>
       </div>
     </section>
 
