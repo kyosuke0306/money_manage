@@ -14,9 +14,17 @@
 
   <main>
     <section class="panel result">
-      <label>見たい日付<input type="date" id="targetDate"></label>
-      <div class="remain-label" id="remainLabel">残り</div>
-      <div class="remain" id="remain">¥0</div>
+      <div class="result-label">使っていい金額（マイナスにならない上限）</div>
+      <div class="result-value" id="canSpend">¥0</div>
+      <div class="result-note" id="lowestNote"></div>
+    </section>
+
+    <section class="panel">
+      <div class="legend">
+        <span><i class="sw low"></i>引き落とし後〜給料日（本当の貯金）</span>
+        <span><i class="sw high"></i>給料日後〜引き落とし</span>
+      </div>
+      <div class="calendar" id="calendar"></div>
     </section>
 
     <section class="panel">
@@ -33,9 +41,12 @@
     </section>
 
     <section class="panel">
-      <h2>引き落とし・支払い</h2>
-      <ul id="itemList" class="item-list"></ul>
-      <button type="button" id="addItem" class="add">＋ 追加</button>
+      <h2>引き落とし</h2>
+      <label class="mb">引き落とし日<select id="withdrawDay"></select></label>
+      <div class="row">
+        <label><span id="nextText">次の引き落とし額（円）</span><input type="number" id="nextAmount" inputmode="numeric" min="0" step="1" placeholder="80000"></label>
+        <label><span id="afterText">次の次の引き落とし額（円）</span><input type="number" id="afterAmount" inputmode="numeric" min="0" step="1" placeholder="80000"></label>
+      </div>
     </section>
   </main>
 
