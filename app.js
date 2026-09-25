@@ -319,9 +319,20 @@
 
   function renderLabels() {
     const [w1, w2, w3] = nextWithdrawDates();
-    $('nextText').textContent = `${md(w1)}の引き落とし額`;
-    $('afterText').textContent = `${md(w2)}の引き落とし額`;
-    $('thirdText').textContent = `${md(w3)}の引き落とし額`;
+    // 支払い金額確定日が過ぎていたら「確定済み」を付ける
+    const label = (id, w) => {
+      const el = $(id);
+      el.textContent = `${md(w)}の引き落とし額`;
+      if (confirmDateFor(w) < today()) {
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.textContent = '確定済み';
+        el.append(badge);
+      }
+    };
+    label('nextText', w1);
+    label('afterText', w2);
+    label('thirdText', w3);
     $('nextAmount').value = state.withdrawals[monthKey(w1)] ?? '';
     $('afterAmount').value = state.withdrawals[monthKey(w2)] ?? '';
     $('thirdAmount').value = state.withdrawals[monthKey(w3)] ?? '';
@@ -685,7 +696,17 @@
 
   let view = 'main';
 
+  // 閉じた入力項目の見出しに出す値
+  function renderSummaries() {
+    $('balanceSum').textContent = `${comma(num(state.accounts.yucho) + num(state.accounts.mufg))}円`;
+    $('salarySum').textContent = `${comma(num(state.salary))}円`;
+    const w = nextWithdrawDates()[0];
+    $('cardSum').textContent = `${md(w)} ${comma(num(state.withdrawals[monthKey(w)]))}円`;
+    $('fixedSum').textContent = `月 ${comma(state.fixedCosts.reduce((a, fc) => a + num(fc.amount), 0))}円`;
+  }
+
   function render() {
+    renderSummaries();
     const days = buildDays();
     renderShortage(days, buildDays(true));
     renderCalendar(days);
@@ -773,7 +794,7 @@
   }
   bind('salaryAccount', 'change', (v) => { state.salaryAccount = v; });
   bind('cardAccount', 'change', (v) => { state.cardAccount = v; });
-  bind('confirmDay', 'change', (v) => { state.confirmDay = Number(v); });
+  bind('confirmDay', 'change', (v) => { state.confirmDay = Number(v); renderLabels(); });
   bind('salary', 'input', (v) => { state.salary = v; });
   bind('payday', 'change', (v) => { state.payday = Number(v); });
   bind('closingDay', 'change', (v) => { state.closingDay = Number(v); });
@@ -781,6 +802,14 @@
   bind('nextAmount', 'input', (v) => { state.withdrawals[monthKey(nextWithdrawDates()[0])] = v; });
   bind('afterAmount', 'input', (v) => { state.withdrawals[monthKey(nextWithdrawDates()[1])] = v; });
   bind('thirdAmount', 'input', (v) => { state.withdrawals[monthKey(nextWithdrawDates()[2])] = v; });
+
+  // カレンダーの見方（ヘルプ）は見たいときだけ開く
+  $('helpButton').addEventListener('click', () => {
+    const open = $('help').hidden;
+    $('help').hidden = !open;
+    $('helpButton').setAttribute('aria-expanded', String(open));
+    $('helpButton').classList.toggle('active', open);
+  });
 
   const changeMonth = (delta) => {
     const next = Math.min(MONTHS - 1, Math.max(0, viewMonth + delta));

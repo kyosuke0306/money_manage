@@ -39,39 +39,49 @@
     </section>
 
     <section class="panel cal-panel">
-      <div class="legend">
-        <span><i class="sw low"></i>引き落とし後〜給料日（本当の貯金）</span>
-        <span><i class="sw high"></i>給料日後〜引き落とし</span>
-        <span><b class="minus-text">赤字</b>＝マイナス</span>
+      <div class="month-nav">
+        <span id="monthTitle"></span>
+        <button type="button" id="helpButton" class="help-button" aria-label="ヘルプ" aria-expanded="false">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.8"/><path d="M12 17.2h.01"/></svg>
+        </button>
       </div>
-      <div class="legend">
-        <span><b>残高</b>：その日の口座残高（変わる日だけ表示）</span>
-        <span><b class="use-text">使える</b>：その日にカードで使っていい金額。その分が引き落とされた後も、本当の貯金（その引き落とし後〜次の給料日の残高）がマイナスにならない上限</span>
+      <div class="help" id="help" hidden>
+        <div class="legend">
+          <span><i class="sw low"></i>引き落とし後〜給料日（本当の貯金）</span>
+          <span><i class="sw high"></i>給料日後〜引き落とし</span>
+          <span><b class="minus-text">赤字</b>＝マイナス</span>
+        </div>
+        <div class="legend">
+          <span><b>残高</b>：その日の口座残高（変わる日だけ表示）</span>
+          <span><b class="use-text">使える</b>：その日にカードで使っていい金額。その分が引き落とされた後も、本当の貯金（その引き落とし後〜次の給料日の残高）がマイナスにならない上限</span>
+        </div>
+        <div class="legend">
+          <span>カレンダーの左右の端をタップ、または左右にスワイプで月を切り替え</span>
+        </div>
       </div>
-      <div class="month-nav" id="monthTitle"></div>
       <div class="calendar" id="calendar"></div>
     </section>
 
-    <section class="panel kind-balance">
-      <h2>今の残高</h2>
+    <details class="panel acc kind-balance">
+      <summary><h2>今の残高</h2><span class="sum-val" id="balanceSum"></span><svg class="icon chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
       <div class="row">
         <label>ゆうちょ（円）<input type="number" id="yucho" inputmode="numeric" step="1"></label>
         <label>三菱（円）<input type="number" id="mufg" inputmode="numeric" step="1"></label>
       </div>
       <div class="total">合計 <b id="balanceTotal">0円</b></div>
-    </section>
+    </details>
 
-    <section class="panel kind-income">
-      <h2>給料 <small>収入</small></h2>
+    <details class="panel acc kind-income">
+      <summary><h2>給料 <small>収入</small></h2><span class="sum-val" id="salarySum"></span><svg class="icon chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
       <div class="row">
         <label>給料日<select id="payday"></select></label>
         <label>金額（円）<input type="number" id="salary" inputmode="numeric" min="0" step="1"></label>
       </div>
       <label class="mt">入金口座<select id="salaryAccount"></select></label>
-    </section>
+    </details>
 
-    <section class="panel kind-expense">
-      <h2>クレジット <small>支出</small></h2>
+    <details class="panel acc kind-expense">
+      <summary><h2>クレジット <small>支出</small></h2><span class="sum-val" id="cardSum"></span><svg class="icon chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
       <div class="row mb">
         <label>締日<select id="closingDay"></select></label>
         <label>引き落とし日（締日の翌月）<select id="withdrawDay"></select></label>
@@ -85,13 +95,13 @@
         <label><span id="afterText">次の月の引き落とし額</span><input type="number" id="afterAmount" inputmode="numeric" min="0" step="1"></label>
         <label><span id="thirdText">その次の月の引き落とし額</span><input type="number" id="thirdAmount" inputmode="numeric" min="0" step="1"></label>
       </div>
-    </section>
+    </details>
 
-    <section class="panel kind-expense">
-      <h2>固定費 <small>支出</small></h2>
+    <details class="panel acc kind-expense">
+      <summary><h2>固定費 <small>支出</small></h2><span class="sum-val" id="fixedSum"></span><svg class="icon chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
       <ul id="fixedList" class="fixed-list"></ul>
       <button type="button" id="addFixed" class="add">＋ 追加</button>
-    </section>
+    </details>
   </main>
 
   <main id="statementsView" hidden>

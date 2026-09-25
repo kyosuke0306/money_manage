@@ -147,7 +147,7 @@ button { cursor: pointer; }
 .day .ev.out { background: var(--minus); }
 .day .ev.close { background: var(--muted); }
 
-.month-nav { text-align: center; margin-top: 10px; font-weight: 700; }
+.month-nav { position: relative; text-align: center; font-weight: 700; min-height: 32px; line-height: 32px; }
 .calendar { touch-action: pan-y; cursor: pointer; user-select: none; -webkit-user-select: none; }
 .day.past { background: transparent; border: 1px dashed var(--border); }
 .day .ev.fix { background: #8a5cd6; }
@@ -214,3 +214,25 @@ button.add { background: var(--primary); border-color: var(--primary); color: #f
 .statement .scroll { overflow-x: auto; }
 .statement table.cf td:first-child { white-space: nowrap; }
 .statement .note.mt { margin: 8px 0 0; }
+
+/* カレンダーのヘルプ（見たいときだけ開く） */
+.help-button { position: absolute; right: 4px; top: 0; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: var(--muted); border-radius: 50%; }
+.help-button.active { background: var(--balance-bg); color: var(--primary); }
+.cal-panel .help { margin: 8px 8px 0; padding: 10px 10px 2px; border-radius: 8px; background: var(--bg); }
+.cal-panel .help .legend { padding: 0; }
+.help[hidden] { display: none; }
+
+/* 入力項目のアコーディオン（編集したい項目だけ開く） */
+.acc { padding: 0; }
+.acc > summary { display: flex; align-items: center; gap: 8px; padding: 14px 16px; cursor: pointer; list-style: none; -webkit-user-select: none; user-select: none; }
+.acc > summary::-webkit-details-marker { display: none; }
+.acc > summary h2 { margin: 0; }
+.acc .sum-val { margin-left: auto; font-size: .85rem; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.acc .chev { color: var(--muted); transition: transform .2s; }
+.acc[open] .chev { transform: rotate(180deg); }
+.acc[open] > summary { padding-bottom: 12px; }
+.acc > :not(summary) { margin-left: 16px; margin-right: 16px; }
+.acc > :last-child { margin-bottom: 16px; }
+
+/* 支払い金額が確定した引き落とし額 */
+.badge { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 4px; font-size: .7rem; font-weight: 700; color: #fff; background: var(--muted); vertical-align: 1px; }
