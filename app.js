@@ -150,9 +150,13 @@
     const cardExtra = new Map();
     for (let d = new Date(t); d <= end; d = addDays(d, 1)) {
       const events = [];
+      // その日の支払い（払った直後の残高 after がマイナスなら払えない）
+      const pays = [];
       if (d > t) {
         if (hits(d, state.withdrawDay)) {
-          total -= num(state.withdrawals[monthKey(d)]) + (cardExtra.get(d.getTime()) || 0);
+          const amt = num(state.withdrawals[monthKey(d)]) + (cardExtra.get(d.getTime()) || 0);
+          total -= amt;
+          if (amt) pays.push({ name: 'カードの引き落とし', amt, after: total });
           events.push({ type: 'out', label: '引落' });
           period = 'low';
         }
@@ -166,7 +170,10 @@
       const cash = due.filter((fc) => !fc.credit);
       const card = due.filter((fc) => fc.credit);
       if (cash.length) {
-        for (const fc of cash) total -= num(fc.amount);
+        for (const fc of cash) {
+          total -= num(fc.amount);
+          if (num(fc.amount)) pays.push({ name: fc.name || '固定費', amt: num(fc.amount), after: total });
+        }
         events.push({ type: 'fix', label: cash.length === 1 ? cash[0].name || '固定費' : '固定費' });
       }
       if (card.length) {
@@ -175,7 +182,7 @@
         events.push({ type: 'card', label: `💳${card.length === 1 ? card[0].name || '固定費' : '固定費'}` });
       }
       if (hits(d, state.closingDay)) events.push({ type: 'close', label: '締日' });
-      days.push({ date: new Date(d), total, period, events });
+      days.push({ date: new Date(d), total, period, events, pays });
     }
     return days;
   }
@@ -360,8 +367,34 @@
     });
   }
 
+  // マイナスになるとき、いつ・何が・いくら足りなくて払えないか
+  function renderShortage(days) {
+    const box = $('shortage');
+    const list = $('shortageList');
+    list.innerHTML = '';
+    for (const d of days) {
+      for (const p of d.pays) {
+        if (p.after >= 0) continue;
+        const short = Math.min(p.amt, -p.after);
+        const li = document.createElement('li');
+        const when = document.createElement('b');
+        when.textContent = `${md(d.date)}（${'日月火水木金土'[d.date.getDay()]}）`;
+        const what = document.createElement('span');
+        what.textContent = `${p.name} ${comma(p.amt)}円`;
+        const lack = document.createElement('span');
+        lack.className = 'lack';
+        lack.textContent = short === p.amt ? `全額 ${comma(short)}円 払えない` : `${comma(short)}円 足りない`;
+        li.append(when, what, lack);
+        list.appendChild(li);
+      }
+    }
+    box.hidden = !list.children.length;
+  }
+
   function render() {
-    renderCalendar(buildDays());
+    const days = buildDays();
+    renderShortage(days);
+    renderCalendar(days);
   }
 
   // 残高の入力欄: 足し算で入力できる。横の「＋」ボタンで + を入れる。入力を終えると計算結果に置き換える

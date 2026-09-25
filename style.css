@@ -83,6 +83,13 @@ button { cursor: pointer; }
 
 .mb { margin-bottom: 12px; }
 
+.shortage { border: 2px solid var(--minus); background: var(--expense-bg); }
+.shortage h2 { color: var(--minus); }
+.shortage ul { list-style: none; margin: 0; padding: 0; }
+.shortage li { display: flex; flex-wrap: wrap; gap: 2px 8px; align-items: baseline; padding: 6px 0; border-top: 1px solid color-mix(in srgb, var(--minus) 25%, transparent); font-size: .9rem; }
+.shortage li:first-child { border-top: none; }
+.shortage .lack { margin-left: auto; color: var(--minus); font-weight: 700; }
+
 /* 入力欄の色分け: 残高=青、収入=緑、支出=赤 */
 .kind-balance { --kind: var(--use); --kind-bg: var(--balance-bg); }
 .kind-income { --kind: var(--plus); --kind-bg: var(--income-bg); }
