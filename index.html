@@ -13,39 +13,41 @@
   </header>
 
   <main>
-    <section class="panel result">
-      <div class="result-label">使っていい金額（マイナスにならない上限）</div>
-      <div class="result-value" id="canSpend">¥0</div>
-      <div class="result-note" id="lowestNote"></div>
-    </section>
-
     <section class="panel">
       <div class="legend">
-        <span><i class="sw low"></i>引き落とし後〜給料日（本当の貯金）</span>
+        <span><i class="sw low"></i>引き落とし後〜給料日（少ない期間）</span>
         <span><i class="sw high"></i>給料日後〜引き落とし</span>
+        <span><b class="minus-text">赤字</b>＝マイナス</span>
+      </div>
+      <div class="legend">
+        <span><b>残高</b>：その日の口座残高（変わる日だけ表示）</span>
+        <span><b class="use-text">使える</b>：その日にカードで使っていい金額（マイナスにならない上限）</span>
       </div>
       <div class="calendar" id="calendar"></div>
     </section>
 
     <section class="panel">
       <h2>今の残高</h2>
-      <label>金額（円）<input type="number" id="balance" inputmode="numeric" step="1" placeholder="100000"></label>
+      <label>金額（円）<input type="number" id="balance" inputmode="numeric" step="1"></label>
     </section>
 
     <section class="panel">
       <h2>給料</h2>
       <div class="row">
         <label>給料日<select id="payday"></select></label>
-        <label>金額（円）<input type="number" id="salary" inputmode="numeric" min="0" step="1" placeholder="250000"></label>
+        <label>金額（円）<input type="number" id="salary" inputmode="numeric" min="0" step="1"></label>
       </div>
     </section>
 
     <section class="panel">
-      <h2>引き落とし</h2>
-      <label class="mb">引き落とし日<select id="withdrawDay"></select></label>
+      <h2>クレジット</h2>
+      <div class="row mb">
+        <label>締日<select id="closingDay"></select></label>
+        <label>引き落とし日（締日の翌月）<select id="withdrawDay"></select></label>
+      </div>
       <div class="row">
-        <label><span id="nextText">次の引き落とし額（円）</span><input type="number" id="nextAmount" inputmode="numeric" min="0" step="1" placeholder="80000"></label>
-        <label><span id="afterText">次の次の引き落とし額（円）</span><input type="number" id="afterAmount" inputmode="numeric" min="0" step="1" placeholder="80000"></label>
+        <label><span id="nextText">次の引き落とし額</span><input type="number" id="nextAmount" inputmode="numeric" min="0" step="1"></label>
+        <label><span id="afterText">次の月の引き落とし額</span><input type="number" id="afterAmount" inputmode="numeric" min="0" step="1"></label>
       </div>
     </section>
   </main>
