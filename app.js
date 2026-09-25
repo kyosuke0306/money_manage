@@ -351,8 +351,27 @@
   bind('nextAmount', 'input', (v) => { state.withdrawals[monthKey(nextWithdrawDates()[0])] = v; });
   bind('afterAmount', 'input', (v) => { state.withdrawals[monthKey(nextWithdrawDates()[1])] = v; });
 
-  $('prevMonth').addEventListener('click', () => { viewMonth = Math.max(0, viewMonth - 1); render(); });
-  $('nextMonth').addEventListener('click', () => { viewMonth = Math.min(MONTHS - 1, viewMonth + 1); render(); });
+  const changeMonth = (delta) => {
+    const next = Math.min(MONTHS - 1, Math.max(0, viewMonth + delta));
+    if (next === viewMonth) return;
+    viewMonth = next;
+    render();
+  };
+  $('prevMonth').addEventListener('click', () => changeMonth(-1));
+  $('nextMonth').addEventListener('click', () => changeMonth(1));
+
+  // カレンダーを左右にスワイプして月を切り替える
+  let touchStart = null;
+  $('calendar').addEventListener('touchstart', (e) => {
+    touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }, { passive: true });
+  $('calendar').addEventListener('touchend', (e) => {
+    if (!touchStart) return;
+    const dx = e.changedTouches[0].clientX - touchStart.x;
+    const dy = e.changedTouches[0].clientY - touchStart.y;
+    touchStart = null;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) changeMonth(dx < 0 ? 1 : -1);
+  });
   $('addFixed').addEventListener('click', () => {
     state.fixedCosts.push({ id: Date.now().toString(36), name: '', day: 31, amount: '', paid: [], credit: false });
     save();

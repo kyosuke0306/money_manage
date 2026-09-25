@@ -110,6 +110,8 @@ button { cursor: pointer; }
 .month-nav { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; font-weight: 700; }
 .month-nav button { width: 44px; font-size: 1.3rem; padding: 2px 0; }
 .month-nav button:disabled { opacity: .3; cursor: default; }
+.calendar { touch-action: pan-y; }
+.swipe-hint { text-align: center; font-size: .7rem; color: var(--muted); margin-top: 6px; }
 .day.past { background: transparent; border: 1px dashed var(--border); }
 .day .ev.fix { background: #8a5cd6; }
 .day .ev.card { background: transparent; color: var(--muted); border: 1px solid var(--border); }

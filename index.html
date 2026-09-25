@@ -21,7 +21,7 @@
       </div>
       <div class="legend">
         <span><b>残高</b>：その日の口座残高（変わる日だけ表示）</span>
-        <span><b class="use-text">使える</b>：その日にカードで使っていい金額（マイナスにならない上限）</span>
+        <span><b class="use-text">使える</b>：その日にカードで使っていい金額。その分が引き落とされた後も、本当の貯金（引き落とし後〜給料日の残高）がマイナスにならない上限</span>
       </div>
       <div class="month-nav">
         <button type="button" id="prevMonth" aria-label="前の月">‹</button>
@@ -29,6 +29,7 @@
         <button type="button" id="nextMonth" aria-label="次の月">›</button>
       </div>
       <div class="calendar" id="calendar"></div>
+      <div class="swipe-hint">← スワイプで月を切り替え →</div>
     </section>
 
     <section class="panel">
