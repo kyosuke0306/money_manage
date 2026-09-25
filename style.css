@@ -81,28 +81,30 @@ button { cursor: pointer; }
 .minus-text { color: var(--minus); }
 .use-text { color: var(--use); }
 
-.calendar { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; margin-top: 10px; }
+/* 金額が入る列は広く、入らない列は狭くする（列幅は中身に合わせる） */
+.calendar { display: grid; grid-template-columns: repeat(7, auto); gap: 2px; margin-top: 10px; }
+.cal-panel { padding-left: 8px; padding-right: 8px; }
+.cal-panel .legend, .cal-panel .month-nav { padding: 0 8px; }
 .wd { text-align: center; font-size: .7rem; color: var(--muted); padding-bottom: 2px; }
 .day {
   border-radius: 6px;
   padding: 3px 2px;
-  min-height: 58px;
+  min-height: 36px;
   text-align: center;
   display: flex;
   flex-direction: column;
   gap: 1px;
-  min-width: 0;
   color: var(--text);
 }
 .day.low { background: var(--low-bg); }
 .day.high { background: var(--high-bg); }
 .day.today { outline: 2px solid var(--primary); outline-offset: -2px; }
 .day .date { font-size: .7rem; color: var(--muted); }
-.day .amt, .day .use { font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.03em; overflow-wrap: anywhere; line-height: 1.2; }
+.day .amt, .day .use { font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.03em; white-space: nowrap; line-height: 1.2; }
 .day .amt { font-size: .64rem; white-space: nowrap; }
 .day .use { font-size: .58rem; color: var(--use); }
 .day .neg { color: var(--minus); }
-.day .ev { font-size: .58rem; border-radius: 3px; color: #fff; line-height: 1.4; white-space: nowrap; overflow: hidden; flex: none; }
+.day .ev { font-size: .58rem; border-radius: 3px; color: #fff; line-height: 1.4; white-space: nowrap; flex: none; padding: 0 2px; }
 .day .ev.in { background: var(--plus); }
 .day .ev.out { background: var(--minus); }
 .day .ev.close { background: var(--muted); }
