@@ -81,7 +81,7 @@ button { cursor: pointer; }
 .minus-text { color: var(--minus); }
 .use-text { color: var(--use); }
 
-.calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-top: 10px; }
+.calendar { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; margin-top: 10px; }
 .wd { text-align: center; font-size: .7rem; color: var(--muted); padding-bottom: 2px; }
 .day {
   border-radius: 6px;
@@ -99,7 +99,7 @@ button { cursor: pointer; }
 .day.today { outline: 2px solid var(--primary); outline-offset: -2px; }
 .day .date { font-size: .7rem; color: var(--muted); }
 .day .amt, .day .use { font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.03em; overflow-wrap: anywhere; line-height: 1.2; }
-.day .amt { font-size: .68rem; }
+.day .amt { font-size: .64rem; white-space: nowrap; }
 .day .use { font-size: .58rem; color: var(--use); }
 .day .neg { color: var(--minus); }
 .day .ev { font-size: .58rem; border-radius: 3px; color: #fff; line-height: 1.4; white-space: nowrap; overflow: hidden; flex: none; }
@@ -110,7 +110,11 @@ button { cursor: pointer; }
 .month-nav { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; font-weight: 700; }
 .month-nav button { width: 44px; font-size: 1.3rem; padding: 2px 0; }
 .month-nav button:disabled { opacity: .3; cursor: default; }
-.calendar { touch-action: pan-y; }
+.calendar { touch-action: pan-y; flex: 1; min-width: 0; }
+.cal-wrap { display: flex; gap: 2px; margin-left: -8px; margin-right: -8px; margin-top: 10px; }
+.cal-wrap .calendar { margin-top: 0; }
+.edge { width: 14px; padding: 0; border: none; border-radius: 6px; background: var(--bg); color: var(--muted); font-size: 1.1rem; flex: none; }
+.edge:disabled { opacity: .3; cursor: default; }
 .swipe-hint { text-align: center; font-size: .7rem; color: var(--muted); margin-top: 6px; }
 .day.past { background: transparent; border: 1px dashed var(--border); }
 .day .ev.fix { background: #8a5cd6; }

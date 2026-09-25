@@ -28,8 +28,12 @@
         <span id="monthTitle"></span>
         <button type="button" id="nextMonth" aria-label="次の月">›</button>
       </div>
-      <div class="calendar" id="calendar"></div>
-      <div class="swipe-hint">← スワイプで月を切り替え →</div>
+      <div class="cal-wrap">
+        <button type="button" class="edge" id="edgePrev" aria-label="前の月">‹</button>
+        <div class="calendar" id="calendar"></div>
+        <button type="button" class="edge" id="edgeNext" aria-label="次の月">›</button>
+      </div>
+      <div class="swipe-hint">端をタップ・スワイプで月を切り替え</div>
     </section>
 
     <section class="panel">
@@ -54,6 +58,7 @@
       <div class="row">
         <label><span id="nextText">次の引き落とし額</span><input type="number" id="nextAmount" inputmode="numeric" min="0" step="1"></label>
         <label><span id="afterText">次の月の引き落とし額</span><input type="number" id="afterAmount" inputmode="numeric" min="0" step="1"></label>
+        <label><span id="thirdText">その次の月の引き落とし額</span><input type="number" id="thirdAmount" inputmode="numeric" min="0" step="1"></label>
       </div>
     </section>
 

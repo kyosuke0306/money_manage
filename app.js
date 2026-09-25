@@ -27,18 +27,34 @@
       salary: 240000,
       closingDay: 31,
       withdrawDay: 27,
-      withdrawals: { '2026-09': 220258, '2026-10': 196099 },
+      withdrawals: { '2026-09': 220258, '2026-10': 196099, '2026-11': 68943 },
       fixedCosts: [
         { id: 'rent', name: '家賃', day: 31, amount: 35000, paid: [] },
         { id: 'utility', name: '光熱費', day: 31, amount: 5000, paid: [] },
         { id: 'transport', name: '交通費', day: 31, amount: 39000, paid: [], credit: true },
+        { id: 'scholarship', name: '奨学金返済', day: 27, amount: 7500, paid: [], credit: false },
       ],
+      migrations: ['nov-withdrawal', 'scholarship'],
     };
     try {
-      const data = { ...empty, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') };
+      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+      if (!stored) return empty;
+      const data = { ...empty, ...stored };
       // 交通費はクレジット払い
       for (const fc of data.fixedCosts) {
         if (fc.credit === undefined) fc.credit = fc.id === 'transport';
+      }
+      // 後から追加したデフォルト値を、保存済みのデータにも一度だけ入れる
+      data.migrations = stored.migrations || [];
+      if (!data.migrations.includes('nov-withdrawal')) {
+        if (data.withdrawals['2026-11'] === undefined) data.withdrawals['2026-11'] = 68943;
+        data.migrations.push('nov-withdrawal');
+      }
+      if (!data.migrations.includes('scholarship')) {
+        if (!data.fixedCosts.some((fc) => fc.id === 'scholarship')) {
+          data.fixedCosts.push({ id: 'scholarship', name: '奨学金返済', day: 27, amount: 7500, paid: [], credit: false });
+        }
+        data.migrations.push('scholarship');
       }
       return data;
     } catch {
@@ -76,13 +92,12 @@
     return d.getTime() === dayIn(d.getFullYear(), d.getMonth(), day).getTime();
   }
 
-  // 明日以降で最初の引き落とし日と、その次の引き落とし日
+  // 明日以降で最初の引き落とし日から3回分
   function nextWithdrawDates() {
     const t = today();
     let d = dayIn(t.getFullYear(), t.getMonth(), state.withdrawDay);
     if (d <= t) d = dayIn(t.getFullYear(), t.getMonth() + 1, state.withdrawDay);
-    const d2 = dayIn(d.getFullYear(), d.getMonth() + 1, state.withdrawDay);
-    return [d, d2];
+    return [0, 1, 2].map((i) => dayIn(d.getFullYear(), d.getMonth() + i, state.withdrawDay));
   }
 
   // 次に来る給料日（明日以降）
@@ -178,6 +193,8 @@
     $('monthTitle').textContent = `${first.getFullYear()}年${first.getMonth() + 1}月`;
     $('prevMonth').disabled = viewMonth === 0;
     $('nextMonth').disabled = viewMonth === MONTHS - 1;
+    $('edgePrev').disabled = viewMonth === 0;
+    $('edgeNext').disabled = viewMonth === MONTHS - 1;
 
     const byTime = new Map(days.map((d, i) => [d.date.getTime(), i]));
 
@@ -238,11 +255,13 @@
   }
 
   function renderLabels() {
-    const [w1, w2] = nextWithdrawDates();
+    const [w1, w2, w3] = nextWithdrawDates();
     $('nextText').textContent = `次の引き落とし額（${md(w1)}）`;
     $('afterText').textContent = `次の月の引き落とし額（${md(w2)}）`;
+    $('thirdText').textContent = `その次の月の引き落とし額（${md(w3)}）`;
     $('nextAmount').value = state.withdrawals[monthKey(w1)] ?? '';
     $('afterAmount').value = state.withdrawals[monthKey(w2)] ?? '';
+    $('thirdAmount').value = state.withdrawals[monthKey(w3)] ?? '';
   }
 
   function renderFixedCosts() {
@@ -350,6 +369,7 @@
   bind('withdrawDay', 'change', (v) => { state.withdrawDay = Number(v); renderLabels(); });
   bind('nextAmount', 'input', (v) => { state.withdrawals[monthKey(nextWithdrawDates()[0])] = v; });
   bind('afterAmount', 'input', (v) => { state.withdrawals[monthKey(nextWithdrawDates()[1])] = v; });
+  bind('thirdAmount', 'input', (v) => { state.withdrawals[monthKey(nextWithdrawDates()[2])] = v; });
 
   const changeMonth = (delta) => {
     const next = Math.min(MONTHS - 1, Math.max(0, viewMonth + delta));
@@ -359,6 +379,8 @@
   };
   $('prevMonth').addEventListener('click', () => changeMonth(-1));
   $('nextMonth').addEventListener('click', () => changeMonth(1));
+  $('edgePrev').addEventListener('click', () => changeMonth(-1));
+  $('edgeNext').addEventListener('click', () => changeMonth(1));
 
   // カレンダーを左右にスワイプして月を切り替える
   let touchStart = null;
