@@ -33,21 +33,21 @@
       <div class="calendar" id="calendar"></div>
     </section>
 
-    <section class="panel">
+    <section class="panel kind-balance">
       <h2>今の残高</h2>
       <label>金額（円）<input type="text" id="balance" class="money" inputmode="numeric" autocomplete="off"></label>
     </section>
 
-    <section class="panel">
-      <h2>給料</h2>
+    <section class="panel kind-income">
+      <h2>給料 <small>収入</small></h2>
       <div class="row">
         <label>給料日<select id="payday"></select></label>
         <label>金額（円）<input type="number" id="salary" inputmode="numeric" min="0" step="1"></label>
       </div>
     </section>
 
-    <section class="panel">
-      <h2>クレジット</h2>
+    <section class="panel kind-expense">
+      <h2>クレジット <small>支出</small></h2>
       <div class="row mb">
         <label>締日<select id="closingDay"></select></label>
         <label>引き落とし日（締日の翌月）<select id="withdrawDay"></select></label>
@@ -59,8 +59,8 @@
       </div>
     </section>
 
-    <section class="panel">
-      <h2>固定費</h2>
+    <section class="panel kind-expense">
+      <h2>固定費 <small>支出</small></h2>
       <ul id="fixedList" class="fixed-list"></ul>
       <button type="button" id="addFixed" class="add">＋ 追加</button>
     </section>

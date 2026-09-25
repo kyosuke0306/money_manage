@@ -10,6 +10,9 @@
   --low-bg: #fbe3c4;
   --high-bg: #e6edf8;
   --use: #2f6fed;
+  --balance-bg: #eaf1ff;
+  --income-bg: #e6f6ee;
+  --expense-bg: #fdecea;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -25,6 +28,9 @@
     --low-bg: #4a3616;
     --high-bg: #1f2d48;
     --use: #8fb3ff;
+    --balance-bg: #1a2640;
+    --income-bg: #15301f;
+    --expense-bg: #3a1a18;
   }
 }
 
@@ -76,6 +82,20 @@ button { cursor: pointer; }
 .money.invalid { border-color: var(--minus); }
 
 .mb { margin-bottom: 12px; }
+
+/* 入力欄の色分け: 残高=青、収入=緑、支出=赤 */
+.kind-balance { --kind: var(--use); --kind-bg: var(--balance-bg); }
+.kind-income { --kind: var(--plus); --kind-bg: var(--income-bg); }
+.kind-expense { --kind: var(--minus); --kind-bg: var(--expense-bg); }
+.panel[class*="kind-"] { border-left: 5px solid var(--kind); }
+.panel[class*="kind-"] h2 { color: var(--kind); }
+.panel h2 small { font-size: .7rem; font-weight: 600; color: #fff; background: var(--kind); border-radius: 4px; padding: 1px 6px; margin-left: 6px; vertical-align: 2px; }
+.panel[class*="kind-"] input[type="number"], .panel[class*="kind-"] input.money {
+  color: var(--kind);
+  font-weight: 700;
+  background: var(--kind-bg);
+  border-color: color-mix(in srgb, var(--kind) 35%, transparent);
+}
 
 .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: .75rem; color: var(--muted); margin-bottom: 8px; }
 .legend span { display: inline; }
