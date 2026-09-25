@@ -76,12 +76,12 @@ input, select, button {
 }
 button { cursor: pointer; }
 
-.money-wrap { display: flex; gap: 4px; min-width: 0; }
-.money-wrap .money { flex: 1; }
-.money-wrap .plus { width: 40px; flex: none; padding: 0; font-size: 1.1rem; font-weight: 700; color: var(--primary); }
-.money.invalid { border-color: var(--minus); }
 
 .mb { margin-bottom: 12px; }
+.mt { margin-top: 12px; }
+.total { margin-top: 10px; text-align: right; font-size: .9rem; color: var(--muted); }
+.total b { font-size: 1.3rem; color: var(--use); margin-left: 6px; }
+.shortage .deadline { flex-basis: 100%; font-size: .8rem; font-weight: 700; color: var(--minus); }
 
 .shortage { border: 2px solid var(--minus); background: var(--expense-bg); }
 .shortage h2 { color: var(--minus); }
@@ -97,7 +97,7 @@ button { cursor: pointer; }
 .panel[class*="kind-"] { border-left: 5px solid var(--kind); }
 .panel[class*="kind-"] h2 { color: var(--kind); }
 .panel h2 small { font-size: .7rem; font-weight: 600; color: #fff; background: var(--kind); border-radius: 4px; padding: 1px 6px; margin-left: 6px; vertical-align: 2px; }
-.panel[class*="kind-"] input[type="number"], .panel[class*="kind-"] input.money {
+.panel[class*="kind-"] input[type="number"] {
   color: var(--kind);
   font-weight: 700;
   background: var(--kind-bg);
@@ -158,6 +158,8 @@ button { cursor: pointer; }
 }
 .fixed input[type="text"] { grid-column: 1 / 3; }
 .fixed .fc-amount { grid-column: 2 / 4; }
+.fixed .fc-account { grid-column: 1 / 2; }
+.fixed [hidden] { display: none; }
 .fixed .del { width: auto; font-size: .8rem; padding: 4px 8px; }
 .fixed .checks { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 20px; }
 .fixed .paid { flex-direction: row; align-items: center; gap: 6px; font-size: .85rem; color: var(--text); }

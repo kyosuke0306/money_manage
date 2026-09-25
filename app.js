@@ -2,6 +2,7 @@
   'use strict';
 
   const STORAGE_KEY = 'money_manage.settings.v3';
+  const ACCOUNTS = { yucho: 'ゆうちょ', mufg: '三菱' };
   const MONTHS = 3; // 今月を含めて表示する月数
 
   const $ = (id) => document.getElementById(id);
@@ -11,22 +12,13 @@
   const md = (d) => `${d.getMonth() + 1}/${d.getDate()}`;
   const dateStr = (d) => `${monthKey(d)}-${pad(d.getDate())}`;
   const parseDate = (s) => new Date(s + 'T00:00:00');
-  // 「12000+3500」のような足し算（引き算も可）を計算する。計算できなければ null
-  const evalSum = (text) => {
-    const s = String(text)
-      .replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
-      .replace(/[＋]/g, '+')
-      .replace(/[－ー−]/g, '-')
-      .replace(/[,，\s円¥￥]/g, '');
-    if (s === '') return '';
-    if (!/^[-+]?\d+([-+]\d+)*[-+]?$/.test(s)) return null;
-    return (s.replace(/[-+]$/, '').match(/[-+]?\d+/g) || []).reduce((a, b) => a + Number(b), 0);
-  };
   const num = (v) => {
     const n = Math.round(Number(v));
     return Number.isFinite(n) ? n : 0;
   };
 
+  // accounts: { yucho, mufg } … 口座ごとの今の残高（合計が今の残高）
+  // salaryAccount / cardAccount / fixedCosts[].account … 入金・引き落としされる口座
   // withdrawals: { 'YYYY-MM': 金額 } … その月の引き落とし額
   // fixedCosts: [{ id, name, day, amount, paid: ['YYYY-MM', ...], credit }]
   //   paid は支払済みの月。credit = クレジットで払う（その月の締めの分として引き落とし日に引かれる）
@@ -35,18 +27,21 @@
 
   function load() {
     const empty = {
-      balance: 222823,
+      accounts: { yucho: '', mufg: 222823 },
       balanceDate: '2026-09-25', // 今の残高を入力した日。この日より後の給料・引き落とし・固定費を反映する
       payday: 31,
       salary: 240000,
+      salaryAccount: 'mufg',
       closingDay: 31,
       withdrawDay: 27,
+      confirmDay: 12, // クレジットの支払い金額が確定する日（これより後は分割にできない）
+      cardAccount: 'mufg',
       withdrawals: { '2026-09': 220258, '2026-10': 196099, '2026-11': 68943 },
       fixedCosts: [
-        { id: 'rent', name: '家賃', day: 31, amount: 35000, paid: [] },
-        { id: 'utility', name: '光熱費', day: 31, amount: 5000, paid: [] },
-        { id: 'transport', name: '交通費', day: 31, amount: 39000, paid: [], credit: true },
-        { id: 'scholarship', name: '奨学金返済', day: 27, amount: 7500, paid: [], credit: false },
+        { id: 'rent', name: '家賃', day: 31, amount: 35000, paid: [], account: 'mufg' },
+        { id: 'utility', name: '光熱費', day: 31, amount: 5000, paid: [], account: 'mufg' },
+        { id: 'transport', name: '交通費', day: 31, amount: 39000, paid: [], credit: true, account: 'mufg' },
+        { id: 'scholarship', name: '奨学金返済', day: 27, amount: 7500, paid: [], credit: false, account: 'yucho' },
       ],
       migrations: ['nov-withdrawal', 'scholarship'],
     };
@@ -61,6 +56,11 @@
       // 後から追加したデフォルト値を、保存済みのデータにも一度だけ入れる
       data.migrations = stored.migrations || [];
       if (!data.balanceDate) data.balanceDate = dateStr(today());
+      // 残高を口座ごとに分けた。これまでの残高は三菱に入れ、奨学金はゆうちょから引く
+      if (!stored.accounts) data.accounts = { yucho: '', mufg: stored.balance ?? 222823 };
+      for (const fc of data.fixedCosts) {
+        if (!fc.account) fc.account = fc.id === 'scholarship' ? 'yucho' : 'mufg';
+      }
       if (!data.migrations.includes('nov-withdrawal')) {
         if (data.withdrawals['2026-11'] === undefined) data.withdrawals['2026-11'] = 68943;
         data.migrations.push('nov-withdrawal');
@@ -143,25 +143,28 @@
     let nextWithdraw = dayIn(t.getFullYear(), t.getMonth(), state.withdrawDay);
     if (nextWithdraw <= t) nextWithdraw = dayIn(t.getFullYear(), t.getMonth() + 1, state.withdrawDay);
     let period = nextPayday(t) <= nextWithdraw ? 'low' : 'high';
-    let total = num(state.balance);
+    // 口座ごとの残高。total はその合計
+    const bal = { yucho: num(state.accounts.yucho), mufg: num(state.accounts.mufg) };
+    let total = bal.yucho + bal.mufg;
+    const move = (account, amt) => { bal[account] += amt; total += amt; };
     const days = [];
     // カード払いの固定費: 引き落とし日（時刻）→ 追加で引き落とされる金額
     // 残高を入力した日より前に使った分は、入力した引き落とし額に含まれている前提
     const cardExtra = new Map();
     for (let d = new Date(t); d <= end; d = addDays(d, 1)) {
       const events = [];
-      // その日の支払い（払った直後の残高 after がマイナスなら払えない）
+      // その日の支払い（払った直後のその口座の残高 after がマイナスなら払えない）
       const pays = [];
       if (d > t) {
         if (hits(d, state.withdrawDay)) {
           const amt = num(state.withdrawals[monthKey(d)]) + (cardExtra.get(d.getTime()) || 0);
-          total -= amt;
-          if (amt) pays.push({ name: 'カードの引き落とし', amt, after: total });
+          move(state.cardAccount, -amt);
+          if (amt) pays.push({ name: 'カードの引き落とし', amt, after: bal[state.cardAccount], account: state.cardAccount, card: true });
           events.push({ type: 'out', label: '引落' });
           period = 'low';
         }
         if (hits(d, state.payday)) {
-          total += num(state.salary);
+          move(state.salaryAccount, num(state.salary));
           events.push({ type: 'in', label: '給料' });
           period = 'high';
         }
@@ -171,8 +174,8 @@
       const card = due.filter((fc) => fc.credit);
       if (cash.length) {
         for (const fc of cash) {
-          total -= num(fc.amount);
-          if (num(fc.amount)) pays.push({ name: fc.name || '固定費', amt: num(fc.amount), after: total });
+          move(fc.account, -num(fc.amount));
+          if (num(fc.amount)) pays.push({ name: fc.name || '固定費', amt: num(fc.amount), after: bal[fc.account], account: fc.account });
         }
         events.push({ type: 'fix', label: cash.length === 1 ? cash[0].name || '固定費' : '固定費' });
       }
@@ -348,8 +351,21 @@
       const creditCheck = document.createElement('input');
       creditCheck.type = 'checkbox';
       creditCheck.checked = !!fc.credit;
-      creditCheck.onchange = () => { fc.credit = creditCheck.checked; save(); render(); };
+      creditCheck.onchange = () => {
+        fc.credit = creditCheck.checked;
+        accountLabel.hidden = fc.credit;
+        save();
+        render();
+      };
       credit.append(creditCheck, 'クレジットで払う');
+
+      const account = document.createElement('select');
+      accountOptions(account, fc.account);
+      account.onchange = () => { fc.account = account.value; save(); render(); };
+      const accountLabel = document.createElement('label');
+      accountLabel.className = 'fc-account';
+      accountLabel.append('引き落とし口座', account);
+      accountLabel.hidden = !!fc.credit;
 
       const dayLabel = document.createElement('label');
       dayLabel.className = 'fc-day';
@@ -362,9 +378,16 @@
       checks.className = 'checks';
       checks.append(credit, paid);
 
-      li.append(name, del, dayLabel, amountLabel, checks);
+      li.append(name, del, dayLabel, amountLabel, accountLabel, checks);
       ul.appendChild(li);
     });
+  }
+
+  // 引き落とし日 w の支払い金額が確定する日（確定日が引き落とし日より後なら前の月）
+  function confirmDateFor(w) {
+    let c = dayIn(w.getFullYear(), w.getMonth(), state.confirmDay);
+    if (c >= w) c = dayIn(w.getFullYear(), w.getMonth() - 1, state.confirmDay);
+    return c;
   }
 
   // マイナスになるとき、いつ・何が・いくら足りなくて払えないか
@@ -383,8 +406,18 @@
         what.textContent = `${p.name} ${comma(p.amt)}円`;
         const lack = document.createElement('span');
         lack.className = 'lack';
-        lack.textContent = short === p.amt ? `全額 ${comma(short)}円 払えない` : `${comma(short)}円 足りない`;
+        lack.textContent = `${ACCOUNTS[p.account]}の残高が` + (short === p.amt ? `足りず全額 ${comma(short)}円 払えない` : `${comma(short)}円 足りない`);
         li.append(when, what, lack);
+        if (p.card) {
+          // 支払い金額が確定する日までに分割にしないと払えない
+          const deadline = confirmDateFor(d.date);
+          const note = document.createElement('div');
+          note.className = 'deadline';
+          note.textContent = deadline >= today()
+            ? `→ ${md(deadline)}（${'日月火水木金土'[deadline.getDay()]}）の支払い金額確定までに分割しないと払えません`
+            : `→ ${md(deadline)} に支払い金額が確定済みのため、分割にはできません`;
+          li.appendChild(note);
+        }
         list.appendChild(li);
       }
     }
@@ -397,39 +430,18 @@
     renderCalendar(days);
   }
 
-  // 残高の入力欄: 足し算で入力できる。横の「＋」ボタンで + を入れる。入力を終えると計算結果に置き換える
-  function moneyInput(input, onValue) {
-    const wrap = document.createElement('span');
-    wrap.className = 'money-wrap';
-    input.replaceWith(wrap);
-    const plus = document.createElement('button');
-    plus.type = 'button';
-    plus.className = 'plus';
-    plus.textContent = '＋';
-    plus.setAttribute('aria-label', '足す');
-    // ボタンを押してもキーボードが閉じないようにする
-    plus.addEventListener('pointerdown', (e) => e.preventDefault());
-    plus.addEventListener('mousedown', (e) => e.preventDefault());
-    plus.addEventListener('click', () => {
-      if (!/[+＋]\s*$/.test(input.value) && input.value !== '') input.value += '+';
-      input.focus();
-      const end = input.value.length;
-      input.setSelectionRange(end, end);
-    });
-    wrap.append(input, plus);
+  function accountOptions(select, selected) {
+    for (const [key, label] of Object.entries(ACCOUNTS)) {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = label;
+      select.appendChild(opt);
+    }
+    select.value = selected;
+  }
 
-    input.addEventListener('input', () => {
-      const v = evalSum(input.value);
-      input.classList.toggle('invalid', v === null);
-      if (v !== null) onValue(v);
-    });
-    const finish = () => {
-      const v = evalSum(input.value);
-      if (v !== null && String(v) !== input.value) input.value = v;
-    };
-    input.addEventListener('change', finish);
-    input.addEventListener('blur', finish);
-    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { finish(); input.blur(); } });
+  function renderTotal() {
+    $('balanceTotal').textContent = `${comma(num(state.accounts.yucho) + num(state.accounts.mufg))}円`;
   }
 
   function dayOptions(select, selected) {
@@ -443,15 +455,24 @@
   }
 
   // 初期表示
-  $('balance').value = state.balance;
+  $('yucho').value = state.accounts.yucho;
+  $('mufg').value = state.accounts.mufg;
+  renderTotal();
   $('salary').value = state.salary;
+  accountOptions($('salaryAccount'), state.salaryAccount);
+  accountOptions($('cardAccount'), state.cardAccount);
   dayOptions($('payday'), state.payday);
   dayOptions($('closingDay'), state.closingDay);
   dayOptions($('withdrawDay'), state.withdrawDay);
+  dayOptions($('confirmDay'), state.confirmDay);
 
   const bind = (id, ev, fn) => $(id).addEventListener(ev, (e) => { fn(e.target.value); save(); render(); });
-  // 今の残高だけ足し算で入力できる
-  moneyInput($('balance'), (v) => { state.balance = v; state.balanceDate = dateStr(today()); save(); render(); });
+  for (const key of Object.keys(ACCOUNTS)) {
+    bind(key, 'input', (v) => { state.accounts[key] = v; state.balanceDate = dateStr(today()); renderTotal(); });
+  }
+  bind('salaryAccount', 'change', (v) => { state.salaryAccount = v; });
+  bind('cardAccount', 'change', (v) => { state.cardAccount = v; });
+  bind('confirmDay', 'change', (v) => { state.confirmDay = Number(v); });
   bind('salary', 'input', (v) => { state.salary = v; });
   bind('payday', 'change', (v) => { state.payday = Number(v); });
   bind('closingDay', 'change', (v) => { state.closingDay = Number(v); });
@@ -487,7 +508,7 @@
     if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) changeMonth(dx < 0 ? 1 : -1);
   });
   $('addFixed').addEventListener('click', () => {
-    state.fixedCosts.push({ id: Date.now().toString(36), name: '', day: 31, amount: '', paid: [], credit: false });
+    state.fixedCosts.push({ id: Date.now().toString(36), name: '', day: 31, amount: '', paid: [], credit: false, account: 'mufg' });
     save();
     renderFixedCosts();
     render();

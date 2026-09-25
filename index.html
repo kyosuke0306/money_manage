@@ -40,7 +40,11 @@
 
     <section class="panel kind-balance">
       <h2>今の残高</h2>
-      <label>金額（円）<input type="text" id="balance" class="money" inputmode="numeric" autocomplete="off"></label>
+      <div class="row">
+        <label>ゆうちょ（円）<input type="number" id="yucho" inputmode="numeric" step="1"></label>
+        <label>三菱（円）<input type="number" id="mufg" inputmode="numeric" step="1"></label>
+      </div>
+      <div class="total">合計 <b id="balanceTotal">0円</b></div>
     </section>
 
     <section class="panel kind-income">
@@ -49,6 +53,7 @@
         <label>給料日<select id="payday"></select></label>
         <label>金額（円）<input type="number" id="salary" inputmode="numeric" min="0" step="1"></label>
       </div>
+      <label class="mt">入金口座<select id="salaryAccount"></select></label>
     </section>
 
     <section class="panel kind-expense">
@@ -56,6 +61,10 @@
       <div class="row mb">
         <label>締日<select id="closingDay"></select></label>
         <label>引き落とし日（締日の翌月）<select id="withdrawDay"></select></label>
+      </div>
+      <div class="row mb">
+        <label>支払い金額確定日<select id="confirmDay"></select></label>
+        <label>引き落とし口座<select id="cardAccount"></select></label>
       </div>
       <div class="row">
         <label><span id="nextText">次の引き落とし額</span><input type="number" id="nextAmount" inputmode="numeric" min="0" step="1"></label>
