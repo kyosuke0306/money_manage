@@ -10,65 +10,32 @@
 <body>
   <header class="app-header">
     <h1>お金の管理</h1>
-    <div class="month-nav">
-      <button id="prevMonth" aria-label="前の月">‹</button>
-      <span id="currentMonth"></span>
-      <button id="nextMonth" aria-label="次の月">›</button>
-    </div>
   </header>
 
   <main>
-    <section class="summary">
-      <div class="card income">
-        <div class="label">収入</div>
-        <div class="value" id="sumIncome">¥0</div>
-      </div>
-      <div class="card expense">
-        <div class="label">支出</div>
-        <div class="value" id="sumExpense">¥0</div>
-      </div>
-      <div class="card balance">
-        <div class="label">収支</div>
-        <div class="value" id="sumBalance">¥0</div>
+    <section class="panel result">
+      <label>見たい日付<input type="date" id="targetDate"></label>
+      <div class="remain-label" id="remainLabel">残り</div>
+      <div class="remain" id="remain">¥0</div>
+    </section>
+
+    <section class="panel">
+      <h2>今の残高</h2>
+      <label>金額（円）<input type="number" id="balance" inputmode="numeric" step="1" placeholder="100000"></label>
+    </section>
+
+    <section class="panel">
+      <h2>給料</h2>
+      <div class="row">
+        <label>給料日<select id="payday"></select></label>
+        <label>金額（円）<input type="number" id="salary" inputmode="numeric" min="0" step="1" placeholder="250000"></label>
       </div>
     </section>
 
     <section class="panel">
-      <h2 id="formTitle">記録する</h2>
-      <form id="entryForm">
-        <div class="type-toggle">
-          <label><input type="radio" name="type" value="expense" checked><span>支出</span></label>
-          <label><input type="radio" name="type" value="income"><span>収入</span></label>
-        </div>
-        <div class="row">
-          <label>日付<input type="date" id="date" required></label>
-          <label>金額<input type="number" id="amount" inputmode="numeric" min="1" step="1" placeholder="1000" required></label>
-        </div>
-        <div class="row">
-          <label>カテゴリ<select id="category"></select></label>
-          <label>メモ<input type="text" id="memo" maxlength="100" placeholder="任意"></label>
-        </div>
-        <div class="actions">
-          <button type="submit" class="primary" id="submitBtn">追加</button>
-          <button type="button" id="cancelEdit" hidden>キャンセル</button>
-        </div>
-      </form>
-    </section>
-
-    <section class="panel">
-      <h2>カテゴリ別の支出</h2>
-      <div id="categoryChart" class="chart"></div>
-    </section>
-
-    <section class="panel">
-      <div class="panel-head">
-        <h2>履歴</h2>
-        <div class="tools">
-          <button id="exportCsv" type="button">CSV出力</button>
-          <label class="file-btn">CSV取込<input type="file" id="importCsv" accept=".csv,text/csv" hidden></label>
-        </div>
-      </div>
-      <ul id="entryList" class="entry-list"></ul>
+      <h2>引き落とし・支払い</h2>
+      <ul id="itemList" class="item-list"></ul>
+      <button type="button" id="addItem" class="add">＋ 追加</button>
     </section>
   </main>
 

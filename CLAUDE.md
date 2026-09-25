@@ -1,6 +1,7 @@
 # money_manage
 
-お金の管理アプリ（静的サイト: `index.html` / `style.css` / `app.js`、データはブラウザの localStorage に保存）。
+お金の管理アプリ（静的サイト: `index.html` / `style.css` / `app.js`、設定はブラウザの localStorage に保存）。
+給料日・引き落とし日を設定し、見たい日付の残高を表示する。ユーザーが指定した機能以外は入れないこと。
 
 ## デプロイ
 - GitHub Pages で公開。`.github/workflows/deploy.yml` が push 時に自動デプロイする。
