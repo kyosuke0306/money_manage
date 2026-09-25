@@ -17,10 +17,18 @@
   <header class="app-header">
     <h1>お金の管理</h1>
     <button type="button" id="syncButton" class="sync" hidden></button>
-    <button type="button" id="menuButton" class="menu-button" aria-label="メニュー" aria-expanded="false">☰</button>
+    <button type="button" id="menuButton" class="menu-button" aria-label="メニュー" aria-expanded="false">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
     <nav class="menu" id="menu" hidden>
-      <button type="button" data-view="main">📅 カレンダー・入力</button>
-      <button type="button" data-view="statements">📊 財務諸表</button>
+      <button type="button" data-view="main">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
+        カレンダー・入力
+      </button>
+      <button type="button" data-view="statements">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M8 16v-3.5M12 16V8M16 16v-5.5"/></svg>
+        財務諸表
+      </button>
     </nav>
   </header>
 

@@ -189,10 +189,14 @@ button.add { background: var(--primary); border-color: var(--primary); color: #f
 /* ハンバーガーメニュー */
 .app-header { position: relative; }
 .app-header h1 { margin-right: auto; }
-.menu-button { width: auto; font-size: 1.3rem; line-height: 1; padding: 4px 10px; border: none; background: rgba(255,255,255,.2); color: #fff; border-radius: 8px; }
+.icon { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.menu-button { width: auto; display: flex; align-items: center; padding: 6px; border: none; background: rgba(255,255,255,.2); color: #fff; border-radius: 8px; }
+.menu-button .icon { width: 22px; height: 22px; }
 .menu { position: absolute; top: 100%; right: 8px; z-index: 10; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,.2); padding: 6px; display: flex; flex-direction: column; gap: 4px; min-width: 200px; }
 .menu[hidden] { display: none; }
-.menu button { text-align: left; border: none; background: transparent; }
+.menu button { display: flex; align-items: center; gap: 10px; text-align: left; border: none; background: transparent; font-size: .95rem; }
+.menu button .icon { color: var(--muted); }
+.menu button.active .icon { color: var(--primary); }
 .menu button.active { background: var(--balance-bg); color: var(--primary); font-weight: 700; }
 
 /* 財務諸表 */
