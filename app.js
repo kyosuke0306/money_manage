@@ -2,6 +2,7 @@
   'use strict';
 
   const STORAGE_KEY = 'money_manage.settings.v3';
+  const MONTHS = 3; // 今月を含めて表示する月数
 
   const $ = (id) => document.getElementById(id);
   const comma = (n) => (n < 0 ? '-' : '') + Math.abs(n).toLocaleString('ja-JP');
@@ -14,7 +15,9 @@
   };
 
   // withdrawals: { 'YYYY-MM': 金額 } … その月の引き落とし額
+  // fixedCosts: [{ id, name, day, amount, paid: ['YYYY-MM', ...] }] … paid は支払済みの月
   const state = load();
+  let viewMonth = 0; // 0 = 今月
 
   function load() {
     const empty = {
@@ -24,6 +27,11 @@
       closingDay: 31,
       withdrawDay: 27,
       withdrawals: { '2026-09': 220258, '2026-10': 196099 },
+      fixedCosts: [
+        { id: 'rent', name: '家賃', day: 31, amount: 35000, paid: [] },
+        { id: 'utility', name: '光熱費', day: 31, amount: 5000, paid: [] },
+        { id: 'transport', name: '交通費', day: 31, amount: 39000, paid: [] },
+      ],
     };
     try {
       return { ...empty, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') };
@@ -85,7 +93,15 @@
     return dayIn(close.getFullYear(), close.getMonth() + 1, state.withdrawDay);
   }
 
-  // 今日から end までの毎日の残高（今日の分は今の残高に含まれている前提）
+  // 固定費をその日に払うか。今月分が未払いのまま支払日を過ぎていたら、今日払う扱いにする
+  function fixedCostDue(fc, d, t) {
+    if (fc.paid.includes(monthKey(d))) return false;
+    const due = dayIn(d.getFullYear(), d.getMonth(), fc.day);
+    if (due.getTime() === d.getTime()) return d >= t;
+    return d.getTime() === t.getTime() && due < t;
+  }
+
+  // 今日から end までの毎日の残高（今日までの給料・引き落としは今の残高に含まれている前提）
   function simulate(t, end) {
     let period = nextPayday(t) <= nextWithdrawDates()[0] ? 'low' : 'high';
     let total = num(state.balance);
@@ -95,27 +111,30 @@
       if (d > t) {
         if (hits(d, state.withdrawDay)) {
           total -= num(state.withdrawals[monthKey(d)]);
-          events.push('out');
+          events.push({ type: 'out', label: '引落' });
           period = 'low';
         }
         if (hits(d, state.payday)) {
           total += num(state.salary);
-          events.push('in');
+          events.push({ type: 'in', label: '給料' });
           period = 'high';
         }
       }
-      if (hits(d, state.closingDay)) events.push('close');
+      const due = state.fixedCosts.filter((fc) => fixedCostDue(fc, d, t));
+      if (due.length) {
+        for (const fc of due) total -= num(fc.amount);
+        events.push({ type: 'fix', label: due.length === 1 ? due[0].name || '固定費' : '固定費' });
+      }
+      if (hits(d, state.closingDay)) events.push({ type: 'close', label: '締日' });
       days.push({ date: new Date(d), total, period, events });
     }
     return days;
   }
 
-  // 1ヶ月後まで（次の月の引き落とし日が入るところまで）の毎日の残高と使っていい金額
+  // 今日から3ヶ月目の月末までの毎日の残高と使っていい金額
   function buildDays() {
     const t = today();
-    let end = new Date(t.getFullYear(), t.getMonth() + 1, t.getDate());
-    const w2 = nextWithdrawDates()[1];
-    if (w2 > end) end = w2;
+    const end = new Date(t.getFullYear(), t.getMonth() + MONTHS, 0);
 
     // 使っていい金額の計算用に、最後の引き落としの後の給料日まで先まで計算する
     const horizon = addDays(billedOn(end), 40);
@@ -137,6 +156,15 @@
   }
 
   function renderCalendar(days) {
+    const t = today();
+    const first = new Date(t.getFullYear(), t.getMonth() + viewMonth, 1);
+    const last = new Date(first.getFullYear(), first.getMonth() + 1, 0);
+    $('monthTitle').textContent = `${first.getFullYear()}年${first.getMonth() + 1}月`;
+    $('prevMonth').disabled = viewMonth === 0;
+    $('nextMonth').disabled = viewMonth === MONTHS - 1;
+
+    const byTime = new Map(days.map((d, i) => [d.date.getTime(), i]));
+
     const cal = $('calendar');
     cal.innerHTML = '';
     for (const w of '日月火水木金土') {
@@ -145,21 +173,29 @@
       h.textContent = w;
       cal.appendChild(h);
     }
-    for (let i = 0; i < days[0].date.getDay(); i++) {
+    for (let i = 0; i < first.getDay(); i++) {
       cal.appendChild(document.createElement('div'));
     }
-    days.forEach((d, i) => {
-      const prev = days[i - 1];
+    for (let date = new Date(first); date <= last; date = addDays(date, 1)) {
       const cell = document.createElement('div');
+      const dateEl = document.createElement('div');
+      dateEl.className = 'date';
+      dateEl.textContent = date.getDate();
+      cell.appendChild(dateEl);
+
+      const i = byTime.get(date.getTime());
+      if (i === undefined) {
+        // 今日より前の日
+        cell.className = 'day past';
+        cal.appendChild(cell);
+        continue;
+      }
+      const d = days[i];
+      // 月の1日は必ず金額を出す。同じ金額が続くときは変わった日だけ表示する
+      const prev = date.getDate() === 1 ? null : days[i - 1];
       cell.className = `day ${d.period}`;
       if (i === 0) cell.classList.add('today');
 
-      const date = document.createElement('div');
-      date.className = 'date';
-      date.textContent = i === 0 || d.date.getDate() === 1 ? md(d.date) : d.date.getDate();
-      cell.appendChild(date);
-
-      // 同じ金額が続くときは、変わった日だけ表示する
       if (!prev || prev.total !== d.total) {
         const amt = document.createElement('div');
         amt.className = 'amt';
@@ -175,15 +211,14 @@
         cell.appendChild(use);
       }
 
-      const labels = { in: '給料', out: '引落', close: '締日' };
       for (const e of d.events) {
         const ev = document.createElement('div');
-        ev.className = `ev ${e}`;
-        ev.textContent = labels[e];
+        ev.className = `ev ${e.type}`;
+        ev.textContent = e.label;
         cell.appendChild(ev);
       }
       cal.appendChild(cell);
-    });
+    }
   }
 
   function renderLabels() {
@@ -192,6 +227,63 @@
     $('afterText').textContent = `次の月の引き落とし額（${md(w2)}）`;
     $('nextAmount').value = state.withdrawals[monthKey(w1)] ?? '';
     $('afterAmount').value = state.withdrawals[monthKey(w2)] ?? '';
+  }
+
+  function renderFixedCosts() {
+    const t = today();
+    const key = monthKey(t);
+    const ul = $('fixedList');
+    ul.innerHTML = '';
+    state.fixedCosts.forEach((fc, idx) => {
+      const li = document.createElement('li');
+      li.className = 'fixed';
+
+      const name = document.createElement('input');
+      name.type = 'text';
+      name.placeholder = '名前';
+      name.value = fc.name;
+      name.oninput = () => { fc.name = name.value; save(); render(); };
+
+      const day = document.createElement('select');
+      dayOptions(day, fc.day);
+      day.onchange = () => { fc.day = Number(day.value); save(); render(); };
+
+      const amount = document.createElement('input');
+      amount.type = 'number';
+      amount.inputMode = 'numeric';
+      amount.min = '0';
+      amount.step = '1';
+      amount.placeholder = '金額';
+      amount.value = fc.amount;
+      amount.oninput = () => { fc.amount = amount.value; save(); render(); };
+
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'del';
+      del.textContent = '削除';
+      del.onclick = () => {
+        state.fixedCosts.splice(idx, 1);
+        save();
+        renderFixedCosts();
+        render();
+      };
+
+      const paid = document.createElement('label');
+      paid.className = 'paid';
+      const check = document.createElement('input');
+      check.type = 'checkbox';
+      check.checked = fc.paid.includes(key);
+      check.onchange = () => {
+        fc.paid = fc.paid.filter((m) => m !== key);
+        if (check.checked) fc.paid.push(key);
+        save();
+        render();
+      };
+      paid.append(check, `${t.getMonth() + 1}月分 支払済み`);
+
+      li.append(name, day, amount, del, paid);
+      ul.appendChild(li);
+    });
   }
 
   function render() {
@@ -224,10 +316,20 @@
   bind('nextAmount', 'input', (v) => { state.withdrawals[monthKey(nextWithdrawDates()[0])] = v; });
   bind('afterAmount', 'input', (v) => { state.withdrawals[monthKey(nextWithdrawDates()[1])] = v; });
 
+  $('prevMonth').addEventListener('click', () => { viewMonth = Math.max(0, viewMonth - 1); render(); });
+  $('nextMonth').addEventListener('click', () => { viewMonth = Math.min(MONTHS - 1, viewMonth + 1); render(); });
+  $('addFixed').addEventListener('click', () => {
+    state.fixedCosts.push({ id: Date.now().toString(36), name: '', day: 31, amount: '', paid: [] });
+    save();
+    renderFixedCosts();
+    render();
+  });
+
   // ローカルで直接開いた場合（未デプロイ）はプレースホルダーを置き換える
   const ver = $('versionInfo');
   if (ver.textContent.includes('__VERSION__')) ver.textContent = 'ローカル（未デプロイ）';
 
   renderLabels();
+  renderFixedCosts();
   render();
 })();

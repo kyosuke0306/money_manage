@@ -102,11 +102,35 @@ button { cursor: pointer; }
 .day .amt { font-size: .68rem; }
 .day .use { font-size: .58rem; color: var(--use); }
 .day .neg { color: var(--minus); }
-.day .ev { font-size: .58rem; border-radius: 3px; color: #fff; line-height: 1.4; margin-top: auto; }
-.day .ev + .ev { margin-top: 1px; }
+.day .ev { font-size: .58rem; border-radius: 3px; color: #fff; line-height: 1.4; white-space: nowrap; overflow: hidden; flex: none; }
 .day .ev.in { background: var(--plus); }
 .day .ev.out { background: var(--minus); }
 .day .ev.close { background: var(--muted); }
+
+.month-nav { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; font-weight: 700; }
+.month-nav button { width: 44px; font-size: 1.3rem; padding: 2px 0; }
+.month-nav button:disabled { opacity: .3; cursor: default; }
+.day.past { background: transparent; border: 1px dashed var(--border); }
+.day .ev.fix { background: #8a5cd6; }
+
+.fixed-list { list-style: none; margin: 0 0 12px; padding: 0; }
+.fixed {
+  display: grid;
+  grid-template-columns: 1fr 5em 7em auto;
+  gap: 6px;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.fixed .del { width: auto; font-size: .8rem; padding: 4px 8px; }
+.fixed .paid { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 6px; font-size: .85rem; color: var(--text); }
+.fixed .paid input { width: 20px; height: 20px; }
+button.add { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 600; }
+
+@media (max-width: 480px) {
+  .fixed { grid-template-columns: 5em 1fr auto; }
+  .fixed input[type="text"] { grid-column: 1 / -1; }
+}
 
 .version {
   position: fixed;

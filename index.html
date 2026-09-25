@@ -15,13 +15,18 @@
   <main>
     <section class="panel">
       <div class="legend">
-        <span><i class="sw low"></i>引き落とし後〜給料日（少ない期間）</span>
+        <span><i class="sw low"></i>引き落とし後〜給料日（本当の貯金）</span>
         <span><i class="sw high"></i>給料日後〜引き落とし</span>
         <span><b class="minus-text">赤字</b>＝マイナス</span>
       </div>
       <div class="legend">
         <span><b>残高</b>：その日の口座残高（変わる日だけ表示）</span>
         <span><b class="use-text">使える</b>：その日にカードで使っていい金額（マイナスにならない上限）</span>
+      </div>
+      <div class="month-nav">
+        <button type="button" id="prevMonth" aria-label="前の月">‹</button>
+        <span id="monthTitle"></span>
+        <button type="button" id="nextMonth" aria-label="次の月">›</button>
       </div>
       <div class="calendar" id="calendar"></div>
     </section>
@@ -49,6 +54,12 @@
         <label><span id="nextText">次の引き落とし額</span><input type="number" id="nextAmount" inputmode="numeric" min="0" step="1"></label>
         <label><span id="afterText">次の月の引き落とし額</span><input type="number" id="afterAmount" inputmode="numeric" min="0" step="1"></label>
       </div>
+    </section>
+
+    <section class="panel">
+      <h2>固定費（引き落とし以外）</h2>
+      <ul id="fixedList" class="fixed-list"></ul>
+      <button type="button" id="addFixed" class="add">＋ 追加</button>
     </section>
   </main>
 
