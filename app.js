@@ -281,7 +281,14 @@
       };
       paid.append(check, `${t.getMonth() + 1}月分 支払済み`);
 
-      li.append(name, day, amount, del, paid);
+      const dayLabel = document.createElement('label');
+      dayLabel.className = 'fc-day';
+      dayLabel.append('支払日（毎月）', day);
+      const amountLabel = document.createElement('label');
+      amountLabel.className = 'fc-amount';
+      amountLabel.append('金額（円）', amount);
+
+      li.append(name, del, dayLabel, amountLabel, paid);
       ul.appendChild(li);
     });
   }
