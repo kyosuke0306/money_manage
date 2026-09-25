@@ -109,7 +109,6 @@ button { cursor: pointer; }
 
 .month-nav { text-align: center; margin-top: 10px; font-weight: 700; }
 .calendar { touch-action: pan-y; cursor: pointer; user-select: none; -webkit-user-select: none; }
-.swipe-hint { text-align: center; font-size: .7rem; color: var(--muted); margin-top: 6px; }
 .day.past { background: transparent; border: 1px dashed var(--border); }
 .day .ev.fix { background: #8a5cd6; }
 .day .ev.card { background: transparent; color: var(--muted); border: 1px solid var(--border); }

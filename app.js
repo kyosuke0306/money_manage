@@ -9,6 +9,8 @@
   const pad = (n) => String(n).padStart(2, '0');
   const monthKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
   const md = (d) => `${d.getMonth() + 1}/${d.getDate()}`;
+  const dateStr = (d) => `${monthKey(d)}-${pad(d.getDate())}`;
+  const parseDate = (s) => new Date(s + 'T00:00:00');
   const num = (v) => {
     const n = Math.round(Number(v));
     return Number.isFinite(n) ? n : 0;
@@ -23,6 +25,7 @@
   function load() {
     const empty = {
       balance: 222823,
+      balanceDate: '2026-09-25', // 今の残高を入力した日。この日より後の給料・引き落とし・固定費を反映する
       payday: 31,
       salary: 240000,
       closingDay: 31,
@@ -46,6 +49,7 @@
       }
       // 後から追加したデフォルト値を、保存済みのデータにも一度だけ入れる
       data.migrations = stored.migrations || [];
+      if (!data.balanceDate) data.balanceDate = dateStr(today());
       if (!data.migrations.includes('nov-withdrawal')) {
         if (data.withdrawals['2026-11'] === undefined) data.withdrawals['2026-11'] = 68943;
         data.migrations.push('nov-withdrawal');
@@ -114,7 +118,8 @@
     return dayIn(close.getFullYear(), close.getMonth() + 1, state.withdrawDay);
   }
 
-  // 固定費をその日に払う（カードなら使う）か。今月分が未払いのまま支払日を過ぎていたら、今日払う扱いにする
+  // 固定費をその日に払う（カードなら使う）か。t = 残高を入力した日
+  // 残高を入力した時点で今月分が未払いのまま支払日を過ぎていたら、入力した日に払う扱いにする
   function fixedCostDue(fc, d, t) {
     if (fc.paid.includes(monthKey(d))) return false;
     const due = dayIn(d.getFullYear(), d.getMonth(), fc.day);
@@ -122,13 +127,15 @@
     return d.getTime() === t.getTime() && due < t;
   }
 
-  // 今日から end までの毎日の残高（今日までの給料・引き落としは今の残高に含まれている前提）
+  // 残高を入力した日 t から end までの毎日の残高（t までの給料・引き落としは入力した残高に含まれている前提）
   function simulate(t, end) {
-    let period = nextPayday(t) <= nextWithdrawDates()[0] ? 'low' : 'high';
+    let nextWithdraw = dayIn(t.getFullYear(), t.getMonth(), state.withdrawDay);
+    if (nextWithdraw <= t) nextWithdraw = dayIn(t.getFullYear(), t.getMonth() + 1, state.withdrawDay);
+    let period = nextPayday(t) <= nextWithdraw ? 'low' : 'high';
     let total = num(state.balance);
     const days = [];
     // カード払いの固定費: 引き落とし日（時刻）→ 追加で引き落とされる金額
-    // 今日より前に使った分は、入力した引き落とし額に含まれている前提
+    // 残高を入力した日より前に使った分は、入力した引き落とし額に含まれている前提
     const cardExtra = new Map();
     for (let d = new Date(t); d <= end; d = addDays(d, 1)) {
       const events = [];
@@ -164,8 +171,11 @@
 
   // 今日から3ヶ月目の月末までの毎日の残高と使っていい金額
   function buildDays() {
-    const t = today();
-    const end = new Date(t.getFullYear(), t.getMonth() + MONTHS, 0);
+    const now = today();
+    const end = new Date(now.getFullYear(), now.getMonth() + MONTHS, 0);
+    // 残高を入力した日から計算する（日付が変わっても、次に残高を変えるまで入力した値を元に進める）
+    let t = parseDate(state.balanceDate);
+    if (!(t <= now)) t = now;
 
     // 使っていい金額の計算用に、最後の引き落としの後の給料日まで先まで計算する
     const horizon = addDays(billedOn(end), 40);
@@ -183,7 +193,7 @@
       return m;
     };
 
-    return all.filter((d) => d.date <= end).map((d) => ({
+    return all.filter((d) => d.date >= now && d.date <= end).map((d) => ({
       ...d,
       canUse: lowestAfter(billedOn(d.date)),
     }));
@@ -361,7 +371,7 @@
   dayOptions($('withdrawDay'), state.withdrawDay);
 
   const bind = (id, ev, fn) => $(id).addEventListener(ev, (e) => { fn(e.target.value); save(); render(); });
-  bind('balance', 'input', (v) => { state.balance = v; });
+  bind('balance', 'input', (v) => { state.balance = v; state.balanceDate = dateStr(today()); });
   bind('salary', 'input', (v) => { state.salary = v; });
   bind('payday', 'change', (v) => { state.payday = Number(v); });
   bind('closingDay', 'change', (v) => { state.closingDay = Number(v); });
@@ -406,6 +416,23 @@
   // ローカルで直接開いた場合（未デプロイ）はプレースホルダーを置き換える
   const ver = $('versionInfo');
   if (ver.textContent.includes('__VERSION__')) ver.textContent = 'ローカル（未デプロイ）';
+
+  // 日付が変わったら（開いたままでも）表示を今日基準に更新する。月が変わると表示する3ヶ月も進む
+  let shownDay = dateStr(today());
+  const refreshIfDayChanged = () => {
+    if (dateStr(today()) === shownDay) return;
+    shownDay = dateStr(today());
+    viewMonth = 0;
+    renderLabels();
+    renderFixedCosts();
+    render();
+  };
+  setInterval(refreshIfDayChanged, 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshIfDayChanged(); });
+  window.addEventListener('pageshow', refreshIfDayChanged);
+
+  // 入力内容がブラウザに消されにくいよう、永続保存をお願いする
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 
   renderLabels();
   renderFixedCosts();

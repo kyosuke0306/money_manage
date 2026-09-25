@@ -31,7 +31,7 @@ jobs:
           DEPLOYED_AT="$(TZ=Asia/Tokyo date '+%Y/%m/%d %H:%M JST')"
           SHORT_SHA="${GITHUB_SHA::7}"
           mkdir -p _site
-          cp index.html style.css app.js _site/
+          cp index.html style.css app.js icon.svg icon-192.png icon-512.png apple-touch-icon.png manifest.webmanifest _site/
           sed -i "s|__VERSION__|${VERSION}|g; s|__DEPLOYED_AT__|${DEPLOYED_AT} (${SHORT_SHA})|g" _site/index.html
           echo "Version: ${VERSION} / Deployed: ${DEPLOYED_AT} / ${SHORT_SHA}"
 
