@@ -85,6 +85,8 @@ button { cursor: pointer; }
 .mt { margin-top: 12px; }
 .total { margin-top: 10px; text-align: right; font-size: .9rem; color: var(--muted); }
 .total b { font-size: 1.3rem; color: var(--use); margin-left: 6px; }
+.shortage .transfer { flex-basis: 100%; font-size: .8rem; font-weight: 700; color: var(--plus); }
+.shortage .transfer.warn { color: var(--minus); }
 .shortage .deadline { flex-basis: 100%; font-size: .8rem; font-weight: 700; color: var(--minus); }
 
 .shortage { border: 2px solid var(--minus); background: var(--expense-bg); }

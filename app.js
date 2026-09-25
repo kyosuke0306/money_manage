@@ -153,7 +153,8 @@
   }
 
   // 残高を入力した日 t から end までの毎日の残高（t までの給料・引き落としは入力した残高に含まれている前提）
-  function simulate(t, end) {
+  // transfer = true のときは、ゆうちょで足りない分を三菱から送金した場合として計算する
+  function simulate(t, end, transfer = false) {
     let nextWithdraw = dayIn(t.getFullYear(), t.getMonth(), state.withdrawDay);
     if (nextWithdraw <= t) nextWithdraw = dayIn(t.getFullYear(), t.getMonth() + 1, state.withdrawDay);
     let period = nextPayday(t) <= nextWithdraw ? 'low' : 'high';
@@ -161,6 +162,17 @@
     const bal = { yucho: num(state.accounts.yucho), mufg: num(state.accounts.mufg) };
     let total = bal.yucho + bal.mufg;
     const move = (account, amt) => { bal[account] += amt; total += amt; };
+    // 支払う。ゆうちょで足りなければ（transfer のとき）三菱から足りない分を送金する
+    const payFrom = (pays, account, amt, info) => {
+      move(account, -amt);
+      let sent = 0;
+      if (transfer && account === 'yucho' && bal.yucho < 0 && bal.mufg > 0) {
+        sent = Math.min(-bal.yucho, bal.mufg);
+        bal.mufg -= sent;
+        bal.yucho += sent;
+      }
+      if (amt) pays.push({ ...info, amt, account, after: bal[account], sent });
+    };
     const days = [];
     // カード払いの固定費: 引き落とし日（時刻）→ 追加で引き落とされる金額
     // 残高を入力した日より前に使った分は、入力した引き落とし額に含まれている前提
@@ -172,8 +184,7 @@
       if (d > t) {
         if (hits(d, state.withdrawDay)) {
           const amt = num(state.withdrawals[monthKey(d)]) + (cardExtra.get(d.getTime()) || 0);
-          move(state.cardAccount, -amt);
-          if (amt) pays.push({ name: 'カードの引き落とし', amt, after: bal[state.cardAccount], account: state.cardAccount, card: true });
+          payFrom(pays, state.cardAccount, amt, { name: 'カードの引き落とし', card: true });
           events.push({ type: 'out', label: '引落' });
           period = 'low';
         }
@@ -188,8 +199,7 @@
       const card = due.filter((fc) => fc.credit);
       if (cash.length) {
         for (const fc of cash) {
-          move(fc.account, -num(fc.amount));
-          if (num(fc.amount)) pays.push({ name: fc.name || '固定費', amt: num(fc.amount), after: bal[fc.account], account: fc.account });
+          payFrom(pays, fc.account, num(fc.amount), { name: fc.name || '固定費' });
         }
         events.push({ type: 'fix', label: cash.length === 1 ? cash[0].name || '固定費' : '固定費' });
       }
@@ -205,7 +215,7 @@
   }
 
   // 今日から3ヶ月目の月末までの毎日の残高と使っていい金額
-  function buildDays() {
+  function buildDays(transfer = false) {
     const now = today();
     const end = new Date(now.getFullYear(), now.getMonth() + MONTHS, 0);
     // 残高を入力した日から計算する（日付が変わっても、次に残高を変えるまで入力した値を元に進める）
@@ -214,7 +224,7 @@
 
     // 使っていい金額の計算用に、最後の引き落としの後の給料日まで先まで計算する
     const horizon = addDays(billedOn(end), 40);
-    const all = simulate(t, horizon);
+    const all = simulate(t, horizon, transfer);
 
     const index = (d) => Math.round((d - t) / 86400000);
 
@@ -405,10 +415,23 @@
   }
 
   // マイナスになるとき、いつ・何が・いくら足りなくて払えないか
-  function renderShortage(days) {
+  function renderShortage(days, transferDays) {
     const box = $('shortage');
     const list = $('shortageList');
     list.innerHTML = '';
+    // 三菱からゆうちょへ送金した場合の支払い（日付・名前・口座で対応させる）
+    const key = (d, p) => `${d.date.getTime()}|${p.name}|${p.account}`;
+    const withTransfer = new Map();
+    const baseShort = new Set();
+    for (const d of days) for (const p of d.pays) if (p.after < 0) baseShort.add(key(d, p));
+    // 送金したことで新しく三菱で足りなくなる支払い
+    const newMufgShort = [];
+    for (const d of transferDays) {
+      for (const p of d.pays) {
+        withTransfer.set(key(d, p), p);
+        if (p.account === 'mufg' && p.after < 0 && !baseShort.has(key(d, p))) newMufgShort.push({ date: d.date, p });
+      }
+    }
     for (const d of days) {
       for (const p of d.pays) {
         if (p.after >= 0) continue;
@@ -422,6 +445,23 @@
         lack.className = 'lack';
         lack.textContent = `${ACCOUNTS[p.account]}の残高が` + (short === p.amt ? `足りず全額 ${comma(short)}円 払えない` : `${comma(short)}円 足りない`);
         li.append(when, what, lack);
+        if (p.account === 'yucho') {
+          const tp = withTransfer.get(key(d, p));
+          const note = document.createElement('div');
+          note.className = 'transfer';
+          if (tp && tp.after >= 0) {
+            const later = newMufgShort.filter((x) => x.date >= d.date);
+            note.textContent = `→ 三菱から ${comma(tp.sent)}円 送金すれば払えます` + (tp.sent > p.amt ? '（それまでの不足分を含む）' : '');
+            if (later.length) {
+              note.classList.add('warn');
+              note.textContent += `。ただし送金すると ${later.map((x) => `${md(x.date)}の${x.p.name}`).join('、')} が三菱で足りなくなります`;
+            }
+          } else {
+            note.classList.add('warn');
+            note.textContent = `→ 三菱から送金しても ${comma(tp ? -tp.after : short)}円 足りません（三菱の残高も足りないため）`;
+          }
+          li.appendChild(note);
+        }
         if (p.card) {
           // 支払い金額が確定する日までに分割にしないと払えない
           const deadline = confirmDateFor(d.date);
@@ -440,7 +480,7 @@
 
   function render() {
     const days = buildDays();
-    renderShortage(days);
+    renderShortage(days, buildDays(true));
     renderCalendar(days);
   }
 
