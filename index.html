@@ -88,8 +88,13 @@
 
   <main id="statementsView" hidden>
     <section class="panel statement">
+      <label>表示する月<select id="stMonth"></select></label>
+      <p class="note mt">月が終わると、その月の財務諸表が確定として残ります。</p>
+    </section>
+
+    <section class="panel statement">
       <h2>貸借対照表（B/S）<small id="bsDate"></small></h2>
-      <p class="note">今日時点の財産と借金。カードの未払い分（これから引き落とされる額）は借金として扱う。</p>
+      <p class="note">財産と借金。カードの未払い分（これから引き落とされる額）は借金として扱う。</p>
       <div class="bs">
         <table id="bsAssets"></table>
         <table id="bsLiabilities"></table>
@@ -97,14 +102,14 @@
     </section>
 
     <section class="panel statement">
-      <h2>損益計算書（P/L）<small>1ヶ月あたり</small></h2>
+      <h2>損益計算書（P/L）<small id="plTitle"></small></h2>
       <p class="note">給料と固定費から見た毎月のもうけ。固定費以外のカード利用は入力がないため含まない。</p>
       <table id="plTable"></table>
     </section>
 
     <section class="panel statement">
-      <h2>キャッシュフロー計算書（C/F）<small>今月から3ヶ月</small></h2>
-      <p class="note">口座のお金の出入り（予定）。今月は今日からの分。</p>
+      <h2>キャッシュフロー計算書（C/F）<small id="cfTitle"></small></h2>
+      <p class="note">口座のお金の出入り。今月は今日からの分。確定した月の「その他」は、予定以外で残高が変わった分（変動費など）。</p>
       <div class="scroll"><table id="cfTable" class="cf"></table></div>
     </section>
   </main>

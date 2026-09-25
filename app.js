@@ -44,6 +44,7 @@
         { id: 'scholarship', name: '奨学金返済', day: 27, amount: 7500, paid: [], credit: false, account: 'yucho' },
       ],
       migrations: ['nov-withdrawal', 'scholarship'],
+      statements: { current: null, history: {} }, // 財務諸表の記録（確定した月を残す）
     };
   }
 
@@ -66,6 +67,7 @@
     // 後から追加したデフォルト値を、保存済みのデータにも一度だけ入れる
     data.migrations = stored.migrations || [];
     if (!data.balanceDate) data.balanceDate = dateStr(today());
+    data.statements = { current: null, history: {}, ...stored.statements };
     // 残高を口座ごとに分けた。これまでの残高は三菱に入れ、奨学金はゆうちょから引く
     if (!stored.accounts) data.accounts = { yucho: '', mufg: stored.balance ?? 222823 };
     for (const fc of data.fixedCosts) {
@@ -503,70 +505,174 @@
   }
 
   // 財務諸表（おまけ）: 貸借対照表・損益計算書・キャッシュフロー計算書
-  function renderStatements(days) {
-    const now = today();
-    const t0 = days[0];
+  // statements.current … 今月の記録（毎回の計算で更新）。月が終わると statements.history[月] に確定として残す
 
-    // 貸借対照表: 資産 = 口座の残高、負債 = カードの未払い分（今日より後に引き落とされる分）
-    $('bsDate').textContent = `${now.getMonth() + 1}/${now.getDate()} 時点`;
-    const assets = $('bsAssets');
-    assets.innerHTML = '';
-    addRow(assets, ['資産の部', ''], 'head');
-    for (const [key, label] of Object.entries(ACCOUNTS)) addRow(assets, [`現金預金（${label}）`, t0.bal[key]], 'sub');
-    addRow(assets, ['資産合計', t0.total], 'sum');
-
-    // 入力済みの引き落とし額 + 今日までにカードで払った固定費（まだ引き落とされていない分）
+  // date 時点のカードの未払い分: [['YYYY-MM-DD'（引き落とし日）, 金額], ...]
+  // 入力済みの引き落とし額 + date までにカードで払った固定費（まだ引き落とされていない分）
+  function debtsAt(date) {
     const debts = new Map();
     for (const [key, v] of Object.entries(state.withdrawals)) {
       const [y, m] = key.split('-').map(Number);
       const w = dayIn(y, m - 1, state.withdrawDay);
-      if (w > now && num(v)) debts.set(w.getTime(), (debts.get(w.getTime()) || 0) + num(v));
+      if (w > date && num(v)) debts.set(w.getTime(), (debts.get(w.getTime()) || 0) + num(v));
     }
     let t = parseDate(state.balanceDate);
-    if (!(t <= now)) t = now;
-    for (const d of simulate(t, now)) {
-      if (d.flow.cardUse && d.flow.billed > now.getTime()) {
-        debts.set(d.flow.billed, (debts.get(d.flow.billed) || 0) + d.flow.cardUse);
+    if (!(t <= today())) t = today();
+    if (t <= date) {
+      for (const d of simulate(t, date)) {
+        if (d.flow.cardUse && d.flow.billed > date.getTime()) {
+          debts.set(d.flow.billed, (debts.get(d.flow.billed) || 0) + d.flow.cardUse);
+        }
       }
     }
+    return [...debts].sort((a, b) => a[0] - b[0]).map(([time, amt]) => [dateStr(new Date(time)), amt]);
+  }
+
+  const bsOf = (day) => ({
+    date: dateStr(day.date), bal: { ...day.bal }, total: day.total, debts: debtsAt(day.date),
+  });
+  const plOf = () => ({
+    salary: num(state.salary),
+    costs: state.fixedCosts.map((fc) => ({ name: fc.name || '固定費', amount: num(fc.amount), credit: !!fc.credit })),
+  });
+  // その日の出入りの前の残高
+  const before = (d) => d.total - d.flow.salary + d.flow.card + d.flow.fixed;
+
+  // 今月の記録を更新し、終わった月は確定として残す。変わったら保存する
+  function recordStatements(days) {
+    const prev = JSON.stringify(state.statements);
+    const st = state.statements;
+    const key = monthKey(today());
+    if (st.current && st.current.key < key) {
+      const c = st.current;
+      if (!st.history[c.key]) {
+        const flows = Object.values(c.days).reduce((a, f) => a.map((x, i) => x + f[i]), [0, 0, 0]);
+        const [salary, card, fixed] = flows;
+        st.history[c.key] = {
+          bs: c.bs,
+          pl: c.pl,
+          cf: {
+            start: c.start, startDate: c.startDate, salary, card, fixed,
+            other: c.bs.total - c.start - salary + card + fixed, end: c.bs.total,
+          },
+        };
+      }
+      st.current = null;
+    }
+    const month = days.filter((d) => monthKey(d.date) === key);
+    const c = st.current || { key, days: {} };
+    // 月の最初に記録した日の、その日の出入りの前の残高（その日のうちは入力の修正に合わせて更新）
+    if (!c.startDate || c.startDate === dateStr(month[0].date)) {
+      c.start = before(month[0]);
+      c.startDate = dateStr(month[0].date);
+    }
+    // 今日以降の出入りは今の入力で更新し、過ぎた日は記録したまま残す
+    for (const d of month) c.days[pad(d.date.getDate())] = [d.flow.salary, d.flow.card, d.flow.fixed];
+    c.bs = bsOf(month[month.length - 1]); // 月末時点（見込み）
+    c.pl = plOf();
+    st.current = c;
+    if (JSON.stringify(st) !== prev) save();
+  }
+
+  function renderBS(bs) {
+    const date = parseDate(bs.date);
+    $('bsDate').textContent = `${date.getMonth() + 1}/${date.getDate()} 時点`;
+    const assets = $('bsAssets');
+    assets.innerHTML = '';
+    addRow(assets, ['資産の部', ''], 'head');
+    for (const [key, label] of Object.entries(ACCOUNTS)) addRow(assets, [`現金預金（${label}）`, bs.bal[key]], 'sub');
+    addRow(assets, ['資産合計', bs.total], 'sum');
+
     const liab = $('bsLiabilities');
     liab.innerHTML = '';
     addRow(liab, ['負債の部', ''], 'head');
     let debtTotal = 0;
-    for (const [time, amt] of [...debts].sort((a, b) => a[0] - b[0])) {
-      addRow(liab, [`未払金（カード ${md(new Date(time))}引落）`, amt], 'sub');
+    for (const [w, amt] of bs.debts) {
+      addRow(liab, [`未払金（カード ${md(parseDate(w))}引落）`, amt], 'sub');
       debtTotal += amt;
     }
-    if (!debts.size) addRow(liab, ['未払金（カード）', 0], 'sub');
+    if (!bs.debts.length) addRow(liab, ['未払金（カード）', 0], 'sub');
     addRow(liab, ['負債合計', debtTotal], 'sum');
-    const equity = t0.total - debtTotal;
+    const equity = bs.total - debtTotal;
     addRow(liab, ['純資産の部', ''], 'head');
     addRow(liab, [equity < 0 ? '純資産（債務超過）' : '純資産', equity], 'sub');
-    addRow(liab, ['負債・純資産合計', t0.total], 'sum');
+    addRow(liab, ['負債・純資産合計', bs.total], 'sum');
+  }
 
-    // 損益計算書: 毎月の給料 − 固定費
-    const pl = $('plTable');
-    pl.innerHTML = '';
-    addRow(pl, ['収益', ''], 'head');
-    addRow(pl, ['給料', num(state.salary)], 'sub');
-    addRow(pl, ['費用', ''], 'head');
+  function renderPL(pl, title) {
+    $('plTitle').textContent = title;
+    const table = $('plTable');
+    table.innerHTML = '';
+    addRow(table, ['収益', ''], 'head');
+    addRow(table, ['給料', pl.salary], 'sub');
+    addRow(table, ['費用', ''], 'head');
     let cost = 0;
-    for (const fc of state.fixedCosts) {
-      addRow(pl, [`${fc.name || '固定費'}${fc.credit ? '（カード）' : ''}`, num(fc.amount)], 'sub');
-      cost += num(fc.amount);
+    for (const fc of pl.costs) {
+      addRow(table, [`${fc.name}${fc.credit ? '（カード）' : ''}`, fc.amount], 'sub');
+      cost += fc.amount;
     }
-    addRow(pl, ['費用合計', cost], 'sum');
-    addRow(pl, ['純利益（毎月）', num(state.salary) - cost], 'sum grand');
+    addRow(table, ['費用合計', cost], 'sum');
+    addRow(table, ['純利益', pl.salary - cost], 'sum grand');
+  }
 
-    // キャッシュフロー計算書: 月ごとの口座のお金の出入り
+  // cols: [{ label, start, salary, card, fixed, other?, end }]
+  function renderCF(cols, title) {
+    $('cfTitle').textContent = title;
+    const cf = $('cfTable');
+    cf.innerHTML = '';
+    const hasOther = cols.some((m) => m.other !== undefined);
+    addRow(cf, ['', ...cols.map((m) => m.label)], 'head');
+    addRow(cf, ['期首残高', ...cols.map((m) => m.start)]);
+    addRow(cf, ['給料', ...cols.map((m) => m.salary)], 'sub');
+    addRow(cf, ['カード引落', ...cols.map((m) => -m.card)], 'sub');
+    addRow(cf, ['固定費（口座）', ...cols.map((m) => -m.fixed)], 'sub');
+    if (hasOther) addRow(cf, ['その他（残高の修正）', ...cols.map((m) => m.other)], 'sub');
+    addRow(cf, ['増減', ...cols.map((m) => m.end - m.start)], 'sum');
+    addRow(cf, ['期末残高', ...cols.map((m) => m.end)], 'sum grand');
+  }
+
+  // 表示する月の選択肢: 今（見込み）と確定した過去の月
+  function renderStatementMonths() {
+    const select = $('stMonth');
+    const keys = Object.keys(state.statements.history).sort().reverse();
+    const selected = keys.includes(select.value) ? select.value : 'now';
+    select.innerHTML = '';
+    const now = document.createElement('option');
+    now.value = 'now';
+    now.textContent = '今（今日時点・今後の予定）';
+    select.appendChild(now);
+    for (const key of keys) {
+      const opt = document.createElement('option');
+      const [y, m] = key.split('-').map(Number);
+      opt.value = key;
+      opt.textContent = `${y}年${m}月（確定）`;
+      select.appendChild(opt);
+    }
+    select.value = selected;
+    return selected;
+  }
+
+  function renderStatements(days) {
+    const selected = renderStatementMonths();
+    if (selected !== 'now') {
+      // 確定した過去の月
+      const h = state.statements.history[selected];
+      const m = Number(selected.split('-')[1]);
+      const from = parseDate(h.cf.startDate);
+      renderBS(h.bs);
+      renderPL(h.pl, `${m}月`);
+      renderCF([{ label: `${m}月`, ...h.cf }], `${m}月（${md(from)}からの記録）`);
+      return;
+    }
+    renderBS(bsOf(days[0]));
+    renderPL(plOf(), '1ヶ月あたり');
+    // 月ごとの口座のお金の出入り
     const months = [];
     for (const d of days) {
       const key = monthKey(d.date);
       let m = months.find((x) => x.key === key);
       if (!m) {
-        // 月初（今月は今日の出入りの前）の残高
-        const start = d.total - d.flow.salary + d.flow.card + d.flow.fixed;
-        m = { key, label: `${d.date.getMonth() + 1}月`, start, salary: 0, card: 0, fixed: 0, end: 0 };
+        m = { key, label: `${d.date.getMonth() + 1}月`, start: before(d), salary: 0, card: 0, fixed: 0, end: 0 };
         months.push(m);
       }
       m.salary += d.flow.salary;
@@ -574,15 +680,7 @@
       m.fixed += d.flow.fixed;
       m.end = d.total;
     }
-    const cf = $('cfTable');
-    cf.innerHTML = '';
-    addRow(cf, ['', ...months.map((m) => m.label)], 'head');
-    addRow(cf, ['期首残高', ...months.map((m) => m.start)]);
-    addRow(cf, ['給料', ...months.map((m) => m.salary)], 'sub');
-    addRow(cf, ['カード引落', ...months.map((m) => -m.card)], 'sub');
-    addRow(cf, ['固定費（口座）', ...months.map((m) => -m.fixed)], 'sub');
-    addRow(cf, ['増減', ...months.map((m) => m.salary - m.card - m.fixed)], 'sum');
-    addRow(cf, ['期末残高', ...months.map((m) => m.end)], 'sum grand');
+    renderCF(months, '今月から3ヶ月');
   }
 
   let view = 'main';
@@ -591,6 +689,7 @@
     const days = buildDays();
     renderShortage(days, buildDays(true));
     renderCalendar(days);
+    recordStatements(days);
     if (view === 'statements') renderStatements(days);
   }
 
@@ -619,6 +718,7 @@
     });
   }
   menu.querySelector('[data-view="main"]').classList.add('active');
+  $('stMonth').addEventListener('change', () => renderStatements(buildDays()));
 
   function accountOptions(select, selected) {
     for (const [key, label] of Object.entries(ACCOUNTS)) {
@@ -742,6 +842,14 @@
     // データベースのデータで置き換える（置き換えたことは同期に通知しない）
     applyData(data) {
       const next = normalize(data);
+      // 財務諸表の記録は、この端末にしかない月も残す
+      const mine = state.statements;
+      next.statements.history = { ...mine.history, ...next.statements.history };
+      const c = next.statements.current;
+      if (mine.current && (!c || c.key < mine.current.key
+        || (c.key === mine.current.key && mine.current.startDate < c.startDate))) {
+        next.statements.current = mine.current;
+      }
       for (const key of Object.keys(state)) delete state[key];
       Object.assign(state, next);
       saveLocal();

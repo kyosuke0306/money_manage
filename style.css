@@ -209,3 +209,4 @@ button.add { background: var(--primary); border-color: var(--primary); color: #f
 .bs { display: grid; gap: 12px; }
 .statement .scroll { overflow-x: auto; }
 .statement table.cf td:first-child { white-space: nowrap; }
+.statement .note.mt { margin: 8px 0 0; }
