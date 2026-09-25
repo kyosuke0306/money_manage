@@ -11,6 +11,17 @@
   const md = (d) => `${d.getMonth() + 1}/${d.getDate()}`;
   const dateStr = (d) => `${monthKey(d)}-${pad(d.getDate())}`;
   const parseDate = (s) => new Date(s + 'T00:00:00');
+  // 「12000+3500」のような足し算（引き算も可）を計算する。計算できなければ null
+  const evalSum = (text) => {
+    const s = String(text)
+      .replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
+      .replace(/[＋]/g, '+')
+      .replace(/[－ー−]/g, '-')
+      .replace(/[,，\s円¥￥]/g, '');
+    if (s === '') return '';
+    if (!/^[-+]?\d+([-+]\d+)*[-+]?$/.test(s)) return null;
+    return (s.replace(/[-+]$/, '').match(/[-+]?\d+/g) || []).reduce((a, b) => a + Number(b), 0);
+  };
   const num = (v) => {
     const n = Math.round(Number(v));
     return Number.isFinite(n) ? n : 0;
@@ -293,13 +304,13 @@
       day.onchange = () => { fc.day = Number(day.value); save(); render(); };
 
       const amount = document.createElement('input');
-      amount.type = 'number';
+      amount.type = 'text';
+      amount.className = 'money';
       amount.inputMode = 'numeric';
-      amount.min = '0';
-      amount.step = '1';
+      amount.autocomplete = 'off';
       amount.placeholder = '金額';
       amount.value = fc.amount;
-      amount.oninput = () => { fc.amount = amount.value; save(); render(); };
+      moneyInput(amount, (v) => { fc.amount = v; save(); render(); });
 
       const del = document.createElement('button');
       del.type = 'button';
@@ -338,7 +349,7 @@
       dayLabel.append('支払日（毎月）', day);
       const amountLabel = document.createElement('label');
       amountLabel.className = 'fc-amount';
-      amountLabel.append('金額（円）', amount);
+      amountLabel.append('金額（円）', amount.parentElement || amount);
 
       const checks = document.createElement('div');
       checks.className = 'checks';
@@ -351,6 +362,41 @@
 
   function render() {
     renderCalendar(buildDays());
+  }
+
+  // 金額の入力欄: 足し算で入力できる。横の「＋」ボタンで + を入れる。入力を終えると計算結果に置き換える
+  function moneyInput(input, onValue) {
+    const wrap = document.createElement('span');
+    wrap.className = 'money-wrap';
+    input.replaceWith(wrap);
+    const plus = document.createElement('button');
+    plus.type = 'button';
+    plus.className = 'plus';
+    plus.textContent = '＋';
+    plus.setAttribute('aria-label', '足す');
+    // ボタンを押してもキーボードが閉じないようにする
+    plus.addEventListener('pointerdown', (e) => e.preventDefault());
+    plus.addEventListener('mousedown', (e) => e.preventDefault());
+    plus.addEventListener('click', () => {
+      if (!/[+＋]\s*$/.test(input.value) && input.value !== '') input.value += '+';
+      input.focus();
+      const end = input.value.length;
+      input.setSelectionRange(end, end);
+    });
+    wrap.append(input, plus);
+
+    input.addEventListener('input', () => {
+      const v = evalSum(input.value);
+      input.classList.toggle('invalid', v === null);
+      if (v !== null) onValue(v);
+    });
+    const finish = () => {
+      const v = evalSum(input.value);
+      if (v !== null && String(v) !== input.value) input.value = v;
+    };
+    input.addEventListener('change', finish);
+    input.addEventListener('blur', finish);
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { finish(); input.blur(); } });
   }
 
   function dayOptions(select, selected) {
@@ -371,14 +417,15 @@
   dayOptions($('withdrawDay'), state.withdrawDay);
 
   const bind = (id, ev, fn) => $(id).addEventListener(ev, (e) => { fn(e.target.value); save(); render(); });
-  bind('balance', 'input', (v) => { state.balance = v; state.balanceDate = dateStr(today()); });
-  bind('salary', 'input', (v) => { state.salary = v; });
+  const bindMoney = (id, fn) => moneyInput($(id), (v) => { fn(v); save(); render(); });
+  bindMoney('balance', (v) => { state.balance = v; state.balanceDate = dateStr(today()); });
+  bindMoney('salary', (v) => { state.salary = v; });
   bind('payday', 'change', (v) => { state.payday = Number(v); });
   bind('closingDay', 'change', (v) => { state.closingDay = Number(v); });
   bind('withdrawDay', 'change', (v) => { state.withdrawDay = Number(v); renderLabels(); });
-  bind('nextAmount', 'input', (v) => { state.withdrawals[monthKey(nextWithdrawDates()[0])] = v; });
-  bind('afterAmount', 'input', (v) => { state.withdrawals[monthKey(nextWithdrawDates()[1])] = v; });
-  bind('thirdAmount', 'input', (v) => { state.withdrawals[monthKey(nextWithdrawDates()[2])] = v; });
+  bindMoney('nextAmount', (v) => { state.withdrawals[monthKey(nextWithdrawDates()[0])] = v; });
+  bindMoney('afterAmount', (v) => { state.withdrawals[monthKey(nextWithdrawDates()[1])] = v; });
+  bindMoney('thirdAmount', (v) => { state.withdrawals[monthKey(nextWithdrawDates()[2])] = v; });
 
   const changeMonth = (delta) => {
     const next = Math.min(MONTHS - 1, Math.max(0, viewMonth + delta));
