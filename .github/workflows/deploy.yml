@@ -1,0 +1,47 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - 'claude/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build site (inject version and deploy time)
+        run: |
+          VERSION="$(tr -d '[:space:]' < VERSION).${GITHUB_RUN_NUMBER}"
+          DEPLOYED_AT="$(TZ=Asia/Tokyo date '+%Y/%m/%d %H:%M JST')"
+          SHORT_SHA="${GITHUB_SHA::7}"
+          mkdir -p _site
+          cp index.html style.css app.js _site/
+          sed -i "s|__VERSION__|${VERSION}|g; s|__DEPLOYED_AT__|${DEPLOYED_AT} (${SHORT_SHA})|g" _site/index.html
+          echo "Version: ${VERSION} / Deployed: ${DEPLOYED_AT} / ${SHORT_SHA}"
+
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
