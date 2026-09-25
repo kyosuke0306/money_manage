@@ -25,8 +25,8 @@
   const state = load();
   let viewMonth = 0; // 0 = 今月
 
-  function load() {
-    const empty = {
+  function defaults() {
+    return {
       accounts: { yucho: '', mufg: 222823 },
       balanceDate: '2026-09-25', // 今の残高を入力した日。この日より後の給料・引き落とし・固定費を反映する
       payday: 31,
@@ -45,44 +45,58 @@
       ],
       migrations: ['nov-withdrawal', 'scholarship'],
     };
+  }
+
+  function load() {
     try {
-      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-      if (!stored) return empty;
-      const data = { ...empty, ...stored };
-      // 交通費はクレジット払い
-      for (const fc of data.fixedCosts) {
-        if (fc.credit === undefined) fc.credit = fc.id === 'transport';
-      }
-      // 後から追加したデフォルト値を、保存済みのデータにも一度だけ入れる
-      data.migrations = stored.migrations || [];
-      if (!data.balanceDate) data.balanceDate = dateStr(today());
-      // 残高を口座ごとに分けた。これまでの残高は三菱に入れ、奨学金はゆうちょから引く
-      if (!stored.accounts) data.accounts = { yucho: '', mufg: stored.balance ?? 222823 };
-      for (const fc of data.fixedCosts) {
-        if (!fc.account) fc.account = fc.id === 'scholarship' ? 'yucho' : 'mufg';
-      }
-      if (!data.migrations.includes('nov-withdrawal')) {
-        if (data.withdrawals['2026-11'] === undefined) data.withdrawals['2026-11'] = 68943;
-        data.migrations.push('nov-withdrawal');
-      }
-      if (!data.migrations.includes('scholarship')) {
-        if (!data.fixedCosts.some((fc) => fc.id === 'scholarship')) {
-          data.fixedCosts.push({ id: 'scholarship', name: '奨学金返済', day: 27, amount: 7500, paid: [], credit: false });
-        }
-        data.migrations.push('scholarship');
-      }
-      return data;
+      return normalize(JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'));
     } catch {
-      return empty;
+      return defaults();
     }
   }
 
-  function save() {
+  // 保存されていたデータ（ブラウザ・データベース）を今の形にそろえる
+  function normalize(stored) {
+    if (!stored) return defaults();
+    const data = { ...defaults(), ...stored };
+    // 交通費はクレジット払い
+    for (const fc of data.fixedCosts) {
+      if (fc.credit === undefined) fc.credit = fc.id === 'transport';
+    }
+    // 後から追加したデフォルト値を、保存済みのデータにも一度だけ入れる
+    data.migrations = stored.migrations || [];
+    if (!data.balanceDate) data.balanceDate = dateStr(today());
+    // 残高を口座ごとに分けた。これまでの残高は三菱に入れ、奨学金はゆうちょから引く
+    if (!stored.accounts) data.accounts = { yucho: '', mufg: stored.balance ?? 222823 };
+    for (const fc of data.fixedCosts) {
+      if (!fc.account) fc.account = fc.id === 'scholarship' ? 'yucho' : 'mufg';
+    }
+    if (!data.migrations.includes('nov-withdrawal')) {
+      if (data.withdrawals['2026-11'] === undefined) data.withdrawals['2026-11'] = 68943;
+      data.migrations.push('nov-withdrawal');
+    }
+    if (!data.migrations.includes('scholarship')) {
+      if (!data.fixedCosts.some((fc) => fc.id === 'scholarship')) {
+        data.fixedCosts.push({ id: 'scholarship', name: '奨学金返済', day: 27, amount: 7500, paid: [], credit: false });
+      }
+      data.migrations.push('scholarship');
+    }
+    return data;
+  }
+
+  const changeListeners = [];
+
+  function saveLocal() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch {
       // 保存できなくても表示は続ける
     }
+  }
+
+  function save() {
+    saveLocal();
+    for (const fn of changeListeners) fn();
   }
 
   function today() {
@@ -454,17 +468,28 @@
     select.value = selected;
   }
 
+  // 入力欄に今のデータを入れる
+  function fillInputs() {
+    $('yucho').value = state.accounts.yucho;
+    $('mufg').value = state.accounts.mufg;
+    renderTotal();
+    $('salary').value = state.salary;
+    $('salaryAccount').value = state.salaryAccount;
+    $('cardAccount').value = state.cardAccount;
+    $('payday').value = state.payday;
+    $('closingDay').value = state.closingDay;
+    $('withdrawDay').value = state.withdrawDay;
+    $('confirmDay').value = state.confirmDay;
+  }
+
   // 初期表示
-  $('yucho').value = state.accounts.yucho;
-  $('mufg').value = state.accounts.mufg;
-  renderTotal();
-  $('salary').value = state.salary;
   accountOptions($('salaryAccount'), state.salaryAccount);
   accountOptions($('cardAccount'), state.cardAccount);
   dayOptions($('payday'), state.payday);
   dayOptions($('closingDay'), state.closingDay);
   dayOptions($('withdrawDay'), state.withdrawDay);
   dayOptions($('confirmDay'), state.confirmDay);
+  fillInputs();
 
   const bind = (id, ev, fn) => $(id).addEventListener(ev, (e) => { fn(e.target.value); save(); render(); });
   for (const key of Object.keys(ACCOUNTS)) {
@@ -534,6 +559,23 @@
 
   // 入力内容がブラウザに消されにくいよう、永続保存をお願いする
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+
+  // データベース同期（sync.js）から使う
+  window.moneyApp = {
+    getData: () => JSON.parse(JSON.stringify(state)),
+    // データベースのデータで置き換える（置き換えたことは同期に通知しない）
+    applyData(data) {
+      const next = normalize(data);
+      for (const key of Object.keys(state)) delete state[key];
+      Object.assign(state, next);
+      saveLocal();
+      fillInputs();
+      renderLabels();
+      renderFixedCosts();
+      render();
+    },
+    onChange: (fn) => changeListeners.push(fn),
+  };
 
   renderLabels();
   renderFixedCosts();

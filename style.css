@@ -47,6 +47,10 @@ body {
 
 .app-header { background: var(--primary); color: #fff; padding: 16px; }
 .app-header h1 { margin: 0; font-size: 1.25rem; }
+.app-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sync { width: auto; font-size: .8rem; padding: 6px 10px; border: none; border-radius: 999px; background: rgba(255,255,255,.2); color: #fff; font-weight: 600; white-space: nowrap; }
+.sync.login { background: #fff; color: var(--primary); }
+.sync.error { background: #fff; color: var(--minus); }
 
 main { max-width: 560px; margin: 0 auto; padding: 16px; }
 
