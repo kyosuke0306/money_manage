@@ -185,3 +185,27 @@ button.add { background: var(--primary); border-color: var(--primary); color: #f
   opacity: .9;
   pointer-events: none;
 }
+
+/* ハンバーガーメニュー */
+.app-header { position: relative; }
+.app-header h1 { margin-right: auto; }
+.menu-button { width: auto; font-size: 1.3rem; line-height: 1; padding: 4px 10px; border: none; background: rgba(255,255,255,.2); color: #fff; border-radius: 8px; }
+.menu { position: absolute; top: 100%; right: 8px; z-index: 10; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,.2); padding: 6px; display: flex; flex-direction: column; gap: 4px; min-width: 200px; }
+.menu[hidden] { display: none; }
+.menu button { text-align: left; border: none; background: transparent; }
+.menu button.active { background: var(--balance-bg); color: var(--primary); font-weight: 700; }
+
+/* 財務諸表 */
+.statement .note { margin: -6px 0 10px; font-size: .75rem; color: var(--muted); }
+.statement h2 small { font-size: .75rem; font-weight: 400; color: var(--muted); margin-left: 6px; }
+.statement table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.statement td { padding: 4px 6px; border-bottom: 1px solid var(--border); }
+.statement td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.statement td.neg { color: var(--minus); }
+.statement tr.head td { font-weight: 700; background: var(--bg); }
+.statement tr.sub td:first-child { padding-left: 16px; }
+.statement tr.sum td { font-weight: 700; }
+.statement tr.grand td { border-top: 2px solid var(--text); border-bottom: none; }
+.bs { display: grid; gap: 12px; }
+.statement .scroll { overflow-x: auto; }
+.statement table.cf td:first-child { white-space: nowrap; }

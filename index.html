@@ -17,9 +17,14 @@
   <header class="app-header">
     <h1>お金の管理</h1>
     <button type="button" id="syncButton" class="sync" hidden></button>
+    <button type="button" id="menuButton" class="menu-button" aria-label="メニュー" aria-expanded="false">☰</button>
+    <nav class="menu" id="menu" hidden>
+      <button type="button" data-view="main">📅 カレンダー・入力</button>
+      <button type="button" data-view="statements">📊 財務諸表</button>
+    </nav>
   </header>
 
-  <main>
+  <main id="mainView">
     <section class="panel shortage" id="shortage" hidden>
       <h2>⚠️ 払えなくなる支払い</h2>
       <ul id="shortageList"></ul>
@@ -78,6 +83,29 @@
       <h2>固定費 <small>支出</small></h2>
       <ul id="fixedList" class="fixed-list"></ul>
       <button type="button" id="addFixed" class="add">＋ 追加</button>
+    </section>
+  </main>
+
+  <main id="statementsView" hidden>
+    <section class="panel statement">
+      <h2>貸借対照表（B/S）<small id="bsDate"></small></h2>
+      <p class="note">今日時点の財産と借金。カードの未払い分（これから引き落とされる額）は借金として扱う。</p>
+      <div class="bs">
+        <table id="bsAssets"></table>
+        <table id="bsLiabilities"></table>
+      </div>
+    </section>
+
+    <section class="panel statement">
+      <h2>損益計算書（P/L）<small>1ヶ月あたり</small></h2>
+      <p class="note">給料と固定費から見た毎月のもうけ。固定費以外のカード利用は入力がないため含まない。</p>
+      <table id="plTable"></table>
+    </section>
+
+    <section class="panel statement">
+      <h2>キャッシュフロー計算書（C/F）<small>今月から3ヶ月</small></h2>
+      <p class="note">口座のお金の出入り（予定）。今月は今日からの分。</p>
+      <div class="scroll"><table id="cfTable" class="cf"></table></div>
     </section>
   </main>
 
