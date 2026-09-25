@@ -15,7 +15,8 @@
   };
 
   // withdrawals: { 'YYYY-MM': 金額 } … その月の引き落とし額
-  // fixedCosts: [{ id, name, day, amount, paid: ['YYYY-MM', ...] }] … paid は支払済みの月
+  // fixedCosts: [{ id, name, day, amount, paid: ['YYYY-MM', ...], credit }]
+  //   paid は支払済みの月。credit = クレジットで払う（その月の締めの分として引き落とし日に引かれる）
   const state = load();
   let viewMonth = 0; // 0 = 今月
 
@@ -30,11 +31,16 @@
       fixedCosts: [
         { id: 'rent', name: '家賃', day: 31, amount: 35000, paid: [] },
         { id: 'utility', name: '光熱費', day: 31, amount: 5000, paid: [] },
-        { id: 'transport', name: '交通費', day: 31, amount: 39000, paid: [] },
+        { id: 'transport', name: '交通費', day: 31, amount: 39000, paid: [], credit: true },
       ],
     };
     try {
-      return { ...empty, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') };
+      const data = { ...empty, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') };
+      // 交通費はクレジット払い
+      for (const fc of data.fixedCosts) {
+        if (fc.credit === undefined) fc.credit = fc.id === 'transport';
+      }
+      return data;
     } catch {
       return empty;
     }
@@ -93,7 +99,7 @@
     return dayIn(close.getFullYear(), close.getMonth() + 1, state.withdrawDay);
   }
 
-  // 固定費をその日に払うか。今月分が未払いのまま支払日を過ぎていたら、今日払う扱いにする
+  // 固定費をその日に払う（カードなら使う）か。今月分が未払いのまま支払日を過ぎていたら、今日払う扱いにする
   function fixedCostDue(fc, d, t) {
     if (fc.paid.includes(monthKey(d))) return false;
     const due = dayIn(d.getFullYear(), d.getMonth(), fc.day);
@@ -106,11 +112,14 @@
     let period = nextPayday(t) <= nextWithdrawDates()[0] ? 'low' : 'high';
     let total = num(state.balance);
     const days = [];
+    // カード払いの固定費: 引き落とし日（時刻）→ 追加で引き落とされる金額
+    // 今日より前に使った分は、入力した引き落とし額に含まれている前提
+    const cardExtra = new Map();
     for (let d = new Date(t); d <= end; d = addDays(d, 1)) {
       const events = [];
       if (d > t) {
         if (hits(d, state.withdrawDay)) {
-          total -= num(state.withdrawals[monthKey(d)]);
+          total -= num(state.withdrawals[monthKey(d)]) + (cardExtra.get(d.getTime()) || 0);
           events.push({ type: 'out', label: '引落' });
           period = 'low';
         }
@@ -121,9 +130,16 @@
         }
       }
       const due = state.fixedCosts.filter((fc) => fixedCostDue(fc, d, t));
-      if (due.length) {
-        for (const fc of due) total -= num(fc.amount);
-        events.push({ type: 'fix', label: due.length === 1 ? due[0].name || '固定費' : '固定費' });
+      const cash = due.filter((fc) => !fc.credit);
+      const card = due.filter((fc) => fc.credit);
+      if (cash.length) {
+        for (const fc of cash) total -= num(fc.amount);
+        events.push({ type: 'fix', label: cash.length === 1 ? cash[0].name || '固定費' : '固定費' });
+      }
+      if (card.length) {
+        const billed = billedOn(d).getTime();
+        for (const fc of card) cardExtra.set(billed, (cardExtra.get(billed) || 0) + num(fc.amount));
+        events.push({ type: 'card', label: `💳${card.length === 1 ? card[0].name || '固定費' : '固定費'}` });
       }
       if (hits(d, state.closingDay)) events.push({ type: 'close', label: '締日' });
       days.push({ date: new Date(d), total, period, events });
@@ -281,6 +297,14 @@
       };
       paid.append(check, `${t.getMonth() + 1}月分 支払済み`);
 
+      const credit = document.createElement('label');
+      credit.className = 'paid';
+      const creditCheck = document.createElement('input');
+      creditCheck.type = 'checkbox';
+      creditCheck.checked = !!fc.credit;
+      creditCheck.onchange = () => { fc.credit = creditCheck.checked; save(); render(); };
+      credit.append(creditCheck, 'クレジットで払う');
+
       const dayLabel = document.createElement('label');
       dayLabel.className = 'fc-day';
       dayLabel.append('支払日（毎月）', day);
@@ -288,7 +312,11 @@
       amountLabel.className = 'fc-amount';
       amountLabel.append('金額（円）', amount);
 
-      li.append(name, del, dayLabel, amountLabel, paid);
+      const checks = document.createElement('div');
+      checks.className = 'checks';
+      checks.append(credit, paid);
+
+      li.append(name, del, dayLabel, amountLabel, checks);
       ul.appendChild(li);
     });
   }
@@ -326,7 +354,7 @@
   $('prevMonth').addEventListener('click', () => { viewMonth = Math.max(0, viewMonth - 1); render(); });
   $('nextMonth').addEventListener('click', () => { viewMonth = Math.min(MONTHS - 1, viewMonth + 1); render(); });
   $('addFixed').addEventListener('click', () => {
-    state.fixedCosts.push({ id: Date.now().toString(36), name: '', day: 31, amount: '', paid: [] });
+    state.fixedCosts.push({ id: Date.now().toString(36), name: '', day: 31, amount: '', paid: [], credit: false });
     save();
     renderFixedCosts();
     render();
