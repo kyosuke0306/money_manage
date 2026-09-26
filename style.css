@@ -246,3 +246,7 @@ button.add { background: var(--primary); border-color: var(--primary); color: #f
 .savings-sub .savings-label { font-weight: 600; }
 .savings-sub-amt { font-size: 1.05rem; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .savings .neg { color: var(--minus); }
+
+/* 最後に更新した日時 */
+.updated { text-align: right; font-size: .75rem; color: var(--muted); margin: -6px 2px 6px; }
+.updated[hidden] { display: none; }

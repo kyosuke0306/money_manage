@@ -96,7 +96,9 @@
     }
   }
 
-  function save() {
+  // auto = true は自動の記録（財務諸表）で、最後に更新した日時は変えない
+  function save(auto = false) {
+    if (!auto) state.updatedAt = Date.now();
     saveLocal();
     for (const fn of changeListeners) fn();
   }
@@ -590,7 +592,7 @@
     c.bs = bsOf(month[month.length - 1]); // 月末時点（見込み）
     c.pl = plOf();
     st.current = c;
-    if (JSON.stringify(st) !== prev) save();
+    if (JSON.stringify(st) !== prev) save(true);
   }
 
   function renderBS(bs) {
@@ -727,7 +729,16 @@
     $('canUseLabel').textContent = `${md(close)}締めまでにカードで使える額`;
   }
 
+  function renderUpdatedAt() {
+    const el = $('updatedAt');
+    el.hidden = !state.updatedAt;
+    if (!state.updatedAt) return;
+    const d = new Date(state.updatedAt);
+    el.textContent = `最終更新 ${d.getFullYear()}/${md(d)}（${'日月火水木金土'[d.getDay()]}）${d.getHours()}:${pad(d.getMinutes())}`;
+  }
+
   function render() {
+    renderUpdatedAt();
     renderSummaries();
     const days = buildDays();
     renderTrueSavings(days);
