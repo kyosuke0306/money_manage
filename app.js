@@ -720,6 +720,11 @@
     };
     show('trueSavings', days.trueSavings.amount);
     show('canUseToday', days[0].canUse);
+    // 今日から締日までにカードで使った分はまとめて引き落とされるので、締日までの合計の上限
+    const now = today();
+    let close = dayIn(now.getFullYear(), now.getMonth(), state.closingDay);
+    if (now > close) close = dayIn(now.getFullYear(), now.getMonth() + 1, state.closingDay);
+    $('canUseLabel').textContent = `${md(close)}締めまでにカードで使える額`;
   }
 
   function render() {

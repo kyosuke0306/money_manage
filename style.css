@@ -238,8 +238,11 @@ button.add { background: var(--primary); border-color: var(--primary); color: #f
 .badge { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 4px; font-size: .7rem; font-weight: 700; color: #fff; background: var(--muted); vertical-align: 1px; }
 
 /* 現時点の本当の貯金 */
-.savings { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; text-align: center; padding: 14px 8px; }
-.savings > div + div { border-left: 1px solid var(--border); }
+.savings { padding: 14px 16px 12px; }
+.savings-main { text-align: center; padding-bottom: 10px; }
 .savings-label { font-size: .8rem; font-weight: 700; color: var(--muted); }
-.savings-amt { font-size: 1.5rem; font-weight: 800; color: var(--use); font-variant-numeric: tabular-nums; line-height: 1.3; }
-.savings-amt.neg { color: var(--minus); }
+.savings-amt { font-size: 2rem; font-weight: 800; color: var(--use); font-variant-numeric: tabular-nums; line-height: 1.25; }
+.savings-sub { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding-top: 10px; border-top: 1px solid var(--border); }
+.savings-sub .savings-label { font-weight: 600; }
+.savings-sub-amt { font-size: 1.05rem; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.savings .neg { color: var(--minus); }
