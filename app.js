@@ -713,16 +713,19 @@
     $('fixedSum').textContent = `月 ${comma(state.fixedCosts.reduce((a, fc) => a + num(fc.amount), 0))}円`;
   }
 
-  function renderTrueSavings(s) {
-    const amt = $('trueSavings');
-    amt.textContent = `${comma(s.amount)}円`;
-    amt.classList.toggle('neg', s.amount < 0);
+  function renderTrueSavings(days) {
+    const show = (id, n) => {
+      $(id).textContent = `${comma(n)}円`;
+      $(id).classList.toggle('neg', n < 0);
+    };
+    show('trueSavings', days.trueSavings.amount);
+    show('canUseToday', days[0].canUse);
   }
 
   function render() {
     renderSummaries();
     const days = buildDays();
-    renderTrueSavings(days.trueSavings);
+    renderTrueSavings(days);
     renderShortage(days, buildDays(true));
     renderCalendar(days);
     recordStatements(days);
