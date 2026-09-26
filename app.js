@@ -257,7 +257,7 @@
       from = dayIn(now.getFullYear(), now.getMonth(), state.withdrawDay);
       if (from <= now) from = dayIn(now.getFullYear(), now.getMonth() + 1, state.withdrawDay);
     }
-    days.trueSavings = { amount: lowestAfter(from), from, to: addDays(nextPayday(from), -1) };
+    days.trueSavings = { amount: lowestAfter(from) };
     return days;
   }
 
@@ -717,8 +717,6 @@
     const amt = $('trueSavings');
     amt.textContent = `${comma(s.amount)}円`;
     amt.classList.toggle('neg', s.amount < 0);
-    const today0 = s.from.getTime() === today().getTime();
-    $('trueSavingsNote').textContent = `${today0 ? '今日' : `${md(s.from)}の引き落とし後`}〜${md(s.to)}（給料日の前日）でいちばん少ない残高`;
   }
 
   function render() {
