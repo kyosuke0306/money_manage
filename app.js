@@ -247,10 +247,18 @@
       return m;
     };
 
-    return all.filter((d) => d.date >= now && d.date <= end).map((d) => ({
+    const days = all.filter((d) => d.date >= now && d.date <= end).map((d) => ({
       ...d,
       canUse: lowestAfter(billedOn(d.date)),
     }));
+    // 現時点の本当の貯金: 今が引き落とし後〜給料日なら今から、そうでなければ次の引き落とし日から、次の給料日の前日までの最小残高
+    let from = now;
+    if (days[0].period !== 'low') {
+      from = dayIn(now.getFullYear(), now.getMonth(), state.withdrawDay);
+      if (from <= now) from = dayIn(now.getFullYear(), now.getMonth() + 1, state.withdrawDay);
+    }
+    days.trueSavings = { amount: lowestAfter(from), from, to: addDays(nextPayday(from), -1) };
+    return days;
   }
 
   function renderCalendar(days) {
@@ -705,9 +713,18 @@
     $('fixedSum').textContent = `月 ${comma(state.fixedCosts.reduce((a, fc) => a + num(fc.amount), 0))}円`;
   }
 
+  function renderTrueSavings(s) {
+    const amt = $('trueSavings');
+    amt.textContent = `${comma(s.amount)}円`;
+    amt.classList.toggle('neg', s.amount < 0);
+    const today0 = s.from.getTime() === today().getTime();
+    $('trueSavingsNote').textContent = `${today0 ? '今日' : `${md(s.from)}の引き落とし後`}〜${md(s.to)}（給料日の前日）でいちばん少ない残高`;
+  }
+
   function render() {
     renderSummaries();
     const days = buildDays();
+    renderTrueSavings(days.trueSavings);
     renderShortage(days, buildDays(true));
     renderCalendar(days);
     recordStatements(days);
