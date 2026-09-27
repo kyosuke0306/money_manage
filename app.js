@@ -125,43 +125,88 @@
     return d.getTime() === dayIn(d.getFullYear(), d.getMonth(), day).getTime();
   }
 
-  // 明日以降で最初の引き落とし日から3回分
-  function nextWithdrawDates() {
-    const t = today();
-    let d = dayIn(t.getFullYear(), t.getMonth(), state.withdrawDay);
-    if (d <= t) d = dayIn(t.getFullYear(), t.getMonth() + 1, state.withdrawDay);
-    return [0, 1, 2].map((i) => dayIn(d.getFullYear(), d.getMonth() + i, state.withdrawDay));
+  const isWeekend = (d) => d.getDay() === 0 || d.getDay() === 6;
+
+  // その月の引き落としが実際にある日（土日なら次の平日）
+  function withdrawOn(year, month) {
+    let d = dayIn(year, month, state.withdrawDay);
+    while (isWeekend(d)) d = addDays(d, 1);
+    return d;
   }
 
-  // 次に来る給料日（明日以降）
-  function nextPayday(t) {
-    let d = dayIn(t.getFullYear(), t.getMonth(), state.payday);
-    if (d <= t) d = dayIn(t.getFullYear(), t.getMonth() + 1, state.payday);
+  // その月の給料が実際に入る日（土日なら前の平日）
+  function paydayOn(year, month) {
+    let d = dayIn(year, month, state.payday);
+    while (isWeekend(d)) d = addDays(d, -1);
     return d;
+  }
+
+  // t より後で最初に on（withdrawOn / paydayOn）の日が来る月の番号（t の月 = 0）
+  function nextIndex(on, t) {
+    for (let i = -1; ; i++) if (on(t.getFullYear(), t.getMonth() + i) > t) return i;
+  }
+
+  // d に on の日が来る月の 'YYYY-MM'（なければ null）。土日でずれて前後の月の分が来ることもある
+  function monthOn(on, d) {
+    for (const i of [-1, 0, 1]) {
+      if (on(d.getFullYear(), d.getMonth() + i).getTime() === d.getTime()) {
+        return monthKey(new Date(d.getFullYear(), d.getMonth() + i, 1));
+      }
+    }
+    return null;
+  }
+
+  // 明日以降で最初の引き落としから3回分: [{ date: 実際の引き落とし日, key: その月の 'YYYY-MM' }]
+  function nextWithdrawDates() {
+    const t = today();
+    const first = nextIndex(withdrawOn, t);
+    return [0, 1, 2].map((i) => ({
+      date: withdrawOn(t.getFullYear(), t.getMonth() + first + i),
+      key: monthKey(new Date(t.getFullYear(), t.getMonth() + first + i, 1)),
+    }));
+  }
+
+  // t より後で最初の引き落とし日
+  function nextWithdraw(t) {
+    return withdrawOn(t.getFullYear(), t.getMonth() + nextIndex(withdrawOn, t));
+  }
+
+  // t より後で最初の給料日
+  function nextPayday(t) {
+    return paydayOn(t.getFullYear(), t.getMonth() + nextIndex(paydayOn, t));
   }
 
   // その日にカードで使った分が引き落とされる日（締日の翌月の引き落とし日）
   function billedOn(d) {
     let close = dayIn(d.getFullYear(), d.getMonth(), state.closingDay);
     if (d > close) close = dayIn(d.getFullYear(), d.getMonth() + 1, state.closingDay);
-    return dayIn(close.getFullYear(), close.getMonth() + 1, state.withdrawDay);
+    return withdrawOn(close.getFullYear(), close.getMonth() + 1);
+  }
+
+  // 固定費を払う日。口座からの引き落としは土日なら次の平日（カード払いはその日のまま）
+  function fixedDueOn(fc, year, month) {
+    let d = dayIn(year, month, fc.day);
+    if (!fc.credit) while (isWeekend(d)) d = addDays(d, 1);
+    return d;
   }
 
   // 固定費をその日に払う（カードなら使う）か。t = 残高を入力した日
-  // 残高を入力した時点で今月分が未払いのまま支払日を過ぎていたら、入力した日に払う扱いにする
+  // 残高を入力した時点でその月の分が未払いのまま支払日を過ぎていたら、入力した日に払う扱いにする
+  // 土日でずれて前の月の分がこの月に来ることもある
   function fixedCostDue(fc, d, t) {
-    if (fc.paid.includes(monthKey(d))) return false;
-    const due = dayIn(d.getFullYear(), d.getMonth(), fc.day);
-    if (due.getTime() === d.getTime()) return d >= t;
-    return d.getTime() === t.getTime() && due < t;
+    for (const i of [-1, 0]) {
+      if (fc.paid.includes(monthKey(new Date(d.getFullYear(), d.getMonth() + i, 1)))) continue;
+      const due = fixedDueOn(fc, d.getFullYear(), d.getMonth() + i);
+      if (due.getTime() === d.getTime()) return d >= t;
+      if (d.getTime() === t.getTime() && due < t && monthKey(due) === monthKey(d)) return true;
+    }
+    return false;
   }
 
   // 残高を入力した日 t から end までの毎日の残高（t までの給料・引き落としは入力した残高に含まれている前提）
   // transfer = true のときは、ゆうちょで足りない分を三菱から送金した場合として計算する
   function simulate(t, end, transfer = false) {
-    let nextWithdraw = dayIn(t.getFullYear(), t.getMonth(), state.withdrawDay);
-    if (nextWithdraw <= t) nextWithdraw = dayIn(t.getFullYear(), t.getMonth() + 1, state.withdrawDay);
-    let period = nextPayday(t) <= nextWithdraw ? 'low' : 'high';
+    let period = nextPayday(t) <= nextWithdraw(t) ? 'low' : 'high';
     // 口座ごとの残高。total はその合計
     const bal = { yucho: num(state.accounts.yucho), mufg: num(state.accounts.mufg) };
     let total = bal.yucho + bal.mufg;
@@ -188,14 +233,15 @@
       // その日の支払い（払った直後のその口座の残高 after がマイナスなら払えない）
       const pays = [];
       if (d > t) {
-        if (hits(d, state.withdrawDay)) {
-          const amt = num(state.withdrawals[monthKey(d)]) + (cardExtra.get(d.getTime()) || 0);
+        const withdrawMonth = monthOn(withdrawOn, d);
+        if (withdrawMonth) {
+          const amt = num(state.withdrawals[withdrawMonth]) + (cardExtra.get(d.getTime()) || 0);
           payFrom(pays, state.cardAccount, amt, { name: 'カードの引き落とし', card: true });
           flow.card = amt;
           events.push({ type: 'out', label: '引落' });
           period = 'low';
         }
-        if (hits(d, state.payday)) {
+        if (monthOn(paydayOn, d)) {
           move(state.salaryAccount, num(state.salary));
           flow.salary = num(state.salary);
           events.push({ type: 'in', label: '給料' });
@@ -256,8 +302,7 @@
     // 現時点の本当の貯金: 今が引き落とし後〜給料日なら今から、そうでなければ次の引き落とし日から、次の給料日の前日までの最小残高
     let from = now;
     if (days[0].period !== 'low') {
-      from = dayIn(now.getFullYear(), now.getMonth(), state.withdrawDay);
-      if (from <= now) from = dayIn(now.getFullYear(), now.getMonth() + 1, state.withdrawDay);
+      from = nextWithdraw(now);
     }
     days.trueSavings = { amount: lowestAfter(from) };
     return days;
@@ -328,7 +373,8 @@
   }
 
   function renderLabels() {
-    const [w1, w2, w3] = nextWithdrawDates();
+    const ws = nextWithdrawDates();
+    const [w1, w2, w3] = ws.map((w) => w.date);
     // 支払い金額確定日が過ぎていたら「確定済み」を付ける
     const label = (id, w) => {
       const el = $(id);
@@ -343,9 +389,9 @@
     label('nextText', w1);
     label('afterText', w2);
     label('thirdText', w3);
-    $('nextAmount').value = state.withdrawals[monthKey(w1)] ?? '';
-    $('afterAmount').value = state.withdrawals[monthKey(w2)] ?? '';
-    $('thirdAmount').value = state.withdrawals[monthKey(w3)] ?? '';
+    $('nextAmount').value = state.withdrawals[ws[0].key] ?? '';
+    $('afterAmount').value = state.withdrawals[ws[1].key] ?? '';
+    $('thirdAmount').value = state.withdrawals[ws[2].key] ?? '';
   }
 
   function renderFixedCosts() {
@@ -534,7 +580,7 @@
     const debts = new Map();
     for (const [key, v] of Object.entries(state.withdrawals)) {
       const [y, m] = key.split('-').map(Number);
-      const w = dayIn(y, m - 1, state.withdrawDay);
+      const w = withdrawOn(y, m - 1);
       if (w > date && num(v)) debts.set(w.getTime(), (debts.get(w.getTime()) || 0) + num(v));
     }
     let t = parseDate(state.balanceDate);
@@ -710,8 +756,8 @@
   function renderSummaries() {
     $('balanceSum').textContent = `${comma(num(state.accounts.yucho) + num(state.accounts.mufg))}円`;
     $('salarySum').textContent = `${comma(num(state.salary))}円`;
-    const w = nextWithdrawDates()[0];
-    $('cardSum').textContent = `${md(w)} ${comma(num(state.withdrawals[monthKey(w)]))}円`;
+    const { date: w, key } = nextWithdrawDates()[0];
+    $('cardSum').textContent = `${md(w)} ${comma(num(state.withdrawals[key]))}円`;
     $('fixedSum').textContent = `月 ${comma(state.fixedCosts.reduce((a, fc) => a + num(fc.amount), 0))}円`;
   }
 
@@ -833,9 +879,9 @@
   bind('payday', 'change', (v) => { state.payday = Number(v); });
   bind('closingDay', 'change', (v) => { state.closingDay = Number(v); });
   bind('withdrawDay', 'change', (v) => { state.withdrawDay = Number(v); renderLabels(); });
-  bind('nextAmount', 'input', (v) => { state.withdrawals[monthKey(nextWithdrawDates()[0])] = v; });
-  bind('afterAmount', 'input', (v) => { state.withdrawals[monthKey(nextWithdrawDates()[1])] = v; });
-  bind('thirdAmount', 'input', (v) => { state.withdrawals[monthKey(nextWithdrawDates()[2])] = v; });
+  bind('nextAmount', 'input', (v) => { state.withdrawals[nextWithdrawDates()[0].key] = v; });
+  bind('afterAmount', 'input', (v) => { state.withdrawals[nextWithdrawDates()[1].key] = v; });
+  bind('thirdAmount', 'input', (v) => { state.withdrawals[nextWithdrawDates()[2].key] = v; });
 
   // カレンダーの見方（ヘルプ）は見たいときだけ開く
   $('helpButton').addEventListener('click', () => {
