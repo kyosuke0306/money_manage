@@ -259,3 +259,7 @@ button.add { background: var(--primary); border-color: var(--primary); color: #f
 .inst .inst-month { grid-column: 1 / 2; }
 .inst .inst-times { grid-column: 2 / 4; }
 .inst .fc-amount { grid-column: 1 / -1; }
+/* アコーディオン内の横幅いっぱいのボタンが左右の余白の分はみ出さないようにする */
+.acc > button.add { width: calc(100% - 32px); }
+.inst input[type="month"] { -webkit-appearance: none; appearance: none; display: block; width: 100%; text-align: left; }
+.inst input[type="month"]::-webkit-date-and-time-value { text-align: left; }
