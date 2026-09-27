@@ -319,6 +319,10 @@
     const first = new Date(t.getFullYear(), t.getMonth() + viewMonth, 1);
     const last = new Date(first.getFullYear(), first.getMonth() + 1, 0);
     $('monthTitle').textContent = `${first.getFullYear()}年${first.getMonth() + 1}月`;
+    // その月に分割払いにしたもの（分割払いの記録から）
+    const inst = state.installments.filter((it) => it.month === monthKey(first));
+    $('monthInst').hidden = !inst.length;
+    $('monthInst').textContent = `分割払い: ${inst.map((it) => `${it.name || '分割'} ${it.times}回`).join('、')}`;
 
     const byTime = new Map(days.map((d, i) => [d.date.getTime(), i]));
 
@@ -932,7 +936,7 @@
   function renderInstallments() {
     const ul = $('instList');
     ul.innerHTML = '';
-    const changed = () => { save(); renderSummaries(); };
+    const changed = () => { save(); render(); };
     [...state.installments].sort((a, b) => (a.month < b.month ? 1 : -1)).forEach((it) => {
       const li = document.createElement('li');
       li.className = 'fixed inst';
@@ -959,7 +963,7 @@
         state.installments = state.installments.filter((x) => x !== it);
         save();
         renderInstallments();
-        renderSummaries();
+        render();
       };
 
       const times = document.createElement('select');
@@ -1003,7 +1007,7 @@
     state.installments.push({ id: Date.now().toString(36), month: monthKey(today()), name: '', times: 3, amount: '' });
     save();
     renderInstallments();
-    renderSummaries();
+    render();
   });
 
   $('addFixed').addEventListener('click', () => {
