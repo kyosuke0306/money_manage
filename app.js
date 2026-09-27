@@ -43,7 +43,9 @@
         { id: 'transport', name: '交通費', day: 31, amount: 39000, paid: [], credit: true, account: 'mufg' },
         { id: 'scholarship', name: '奨学金返済', day: 27, amount: 7500, paid: [], credit: false, account: 'yucho' },
       ],
-      migrations: ['nov-withdrawal', 'scholarship'],
+      // 分割払いの記録（計算には使わない。引き落とし額は分割後の金額を入力する）
+      installments: [{ id: 'transport-2026-09', month: '2026-09', name: '交通費', times: 3, amount: 39000 }],
+      migrations: ['nov-withdrawal', 'scholarship', 'installments'],
       statements: { current: null, history: {} }, // 財務諸表の記録（確定した月を残す）
     };
   }
@@ -76,6 +78,10 @@
     if (!data.migrations.includes('nov-withdrawal')) {
       if (data.withdrawals['2026-11'] === undefined) data.withdrawals['2026-11'] = 68943;
       data.migrations.push('nov-withdrawal');
+    }
+    if (!data.migrations.includes('installments')) {
+      if (!stored.installments) data.installments = defaults().installments;
+      data.migrations.push('installments');
     }
     if (!data.migrations.includes('scholarship')) {
       if (!data.fixedCosts.some((fc) => fc.id === 'scholarship')) {
@@ -758,6 +764,11 @@
     $('salarySum').textContent = `${comma(num(state.salary))}円`;
     const { date: w, key } = nextWithdrawDates()[0];
     $('cardSum').textContent = `${md(w)} ${comma(num(state.withdrawals[key]))}円`;
+    // 分割払いの記録: 最新の月のもの
+    const latest = [...state.installments].sort((a, b) => (a.month < b.month ? 1 : -1))[0];
+    $('instSum').textContent = latest
+      ? `${Number(latest.month.split('-')[1])}月 ${latest.name || '分割'} ${latest.times}回${state.installments.length > 1 ? ` ほか${state.installments.length - 1}件` : ''}`
+      : 'なし';
     $('fixedSum').textContent = `月 ${comma(state.fixedCosts.reduce((a, fc) => a + num(fc.amount), 0))}円`;
   }
 
@@ -917,6 +928,84 @@
     touchStart = null;
     if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) changeMonth(dx < 0 ? 1 : -1);
   });
+  // 分割払いの記録
+  function renderInstallments() {
+    const ul = $('instList');
+    ul.innerHTML = '';
+    const changed = () => { save(); renderSummaries(); };
+    [...state.installments].sort((a, b) => (a.month < b.month ? 1 : -1)).forEach((it) => {
+      const li = document.createElement('li');
+      li.className = 'fixed inst';
+
+      const month = document.createElement('input');
+      month.type = 'month';
+      month.value = it.month;
+      month.onchange = () => { it.month = month.value; changed(); };
+      const monthLabel = document.createElement('label');
+      monthLabel.className = 'inst-month';
+      monthLabel.append('月', month);
+
+      const name = document.createElement('input');
+      name.type = 'text';
+      name.placeholder = '項目';
+      name.value = it.name;
+      name.oninput = () => { it.name = name.value; changed(); };
+
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'del';
+      del.textContent = '削除';
+      del.onclick = () => {
+        state.installments = state.installments.filter((x) => x !== it);
+        save();
+        renderInstallments();
+        renderSummaries();
+      };
+
+      const times = document.createElement('select');
+      for (let n = 2; n <= 24; n++) {
+        const opt = document.createElement('option');
+        opt.value = n;
+        opt.textContent = `${n}回払い`;
+        times.appendChild(opt);
+      }
+      times.value = it.times;
+      const timesLabel = document.createElement('label');
+      timesLabel.className = 'inst-times';
+      timesLabel.append('回数', times);
+
+      const amount = document.createElement('input');
+      amount.type = 'number';
+      amount.inputMode = 'numeric';
+      amount.min = '0';
+      amount.step = '1';
+      amount.placeholder = '金額';
+      amount.value = it.amount;
+      const amountLabel = document.createElement('label');
+      amountLabel.className = 'fc-amount';
+      amountLabel.append('分割した金額（円）', amount);
+
+      const per = document.createElement('div');
+      per.className = 'inst-per';
+      const showPer = () => {
+        per.textContent = num(it.amount) ? `1回あたり 約${comma(Math.round(num(it.amount) / it.times))}円` : '';
+      };
+      times.onchange = () => { it.times = Number(times.value); showPer(); changed(); };
+      amount.oninput = () => { it.amount = amount.value; showPer(); changed(); };
+      showPer();
+
+      li.append(name, del, monthLabel, timesLabel, amountLabel, per);
+      ul.appendChild(li);
+    });
+  }
+
+  $('addInst').addEventListener('click', () => {
+    state.installments.push({ id: Date.now().toString(36), month: monthKey(today()), name: '', times: 3, amount: '' });
+    save();
+    renderInstallments();
+    renderSummaries();
+  });
+
   $('addFixed').addEventListener('click', () => {
     state.fixedCosts.push({ id: Date.now().toString(36), name: '', day: 31, amount: '', paid: [], credit: false, account: 'mufg' });
     save();
@@ -965,6 +1054,7 @@
       fillInputs();
       renderLabels();
       renderFixedCosts();
+      renderInstallments();
       render();
     },
     onChange: (fn) => changeListeners.push(fn),
@@ -972,5 +1062,6 @@
 
   renderLabels();
   renderFixedCosts();
+  renderInstallments();
   render();
 })();
