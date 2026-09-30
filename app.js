@@ -1180,7 +1180,12 @@
   };
   $('flipFront').addEventListener('click', () => flip(true));
   $('flipFront').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(true); } });
-  $('flipBack').addEventListener('click', () => flip(false));
+  $('flipBack').addEventListener('click', () => {
+    // 表に戻すときは支払いのツリーも閉じて、カードの大きさを元に戻す
+    $('payFolder').classList.remove('open');
+    $('payFolderHead').setAttribute('aria-expanded', false);
+    flip(false);
+  });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheets(); });
 
   renderLabels();

@@ -534,3 +534,26 @@ body.sheet-open { overflow: hidden; }
 .acc > summary:last-child { margin-bottom: 0 !important; }
 .flip-back .acc-group:not(.tree-group) > .acc > summary, .flip-back .folder-head { min-height: 88px; }
 .flip-front { display: flex; flex-direction: column; justify-content: center; }
+
+/* 裏返したとき、見えていない面の中身（飾りの円やボタン）が透けないように、回転の途中で隠す */
+.flip-inner { grid-template-columns: minmax(0, 1fr); }
+.flip-front, .flip-back { visibility: visible; transition: visibility 0s .3s; }
+.flip.flipped .flip-front, .flip:not(.flipped) .flip-back { visibility: hidden; }
+.flip-back { -webkit-transform: rotateY(180deg) translateZ(1px); transform: rotateY(180deg) translateZ(1px); }
+.flip-face * { -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+
+/* ===== ヘッダー: 英字のワードマーク ===== */
+.app-header { align-items: flex-end; padding: 18px 18px 8px; }
+.brand-text { gap: 2px; }
+.app-header .updated { order: -1; font-size: .64rem; font-weight: 700; letter-spacing: .12em; color: var(--muted); text-transform: uppercase; }
+.app-header h1.wordmark {
+  font-family: "Avenir Next", "Helvetica Neue", "Segoe UI", Arial, sans-serif;
+  font-size: 1.9rem; font-weight: 800; letter-spacing: -.035em; line-height: 1; margin: 0;
+  background: linear-gradient(135deg, #121b45 0%, #1f3fae 55%, #3b6cf0 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.wordmark-dot { color: #3b6cf0; -webkit-text-fill-color: #3b6cf0; }
+@media (prefers-color-scheme: dark) {
+  .app-header h1.wordmark { background: linear-gradient(135deg, #e6e9ef 0%, #8fb3ff 100%); -webkit-background-clip: text; background-clip: text; }
+  .wordmark-dot { color: #8fb3ff; -webkit-text-fill-color: #8fb3ff; }
+}
