@@ -442,3 +442,31 @@ body.sheet-open { overflow: hidden; }
 .folder.open .tree-group > .acc:nth-child(2) > summary { transition-delay: .1s; }
 .folder.open .tree-group > .acc:nth-child(3) > summary { transition-delay: .15s; }
 .folder.open .tree-group > .acc:nth-child(4) > summary { transition-delay: .2s; }
+
+/* ===== 残高・給料・支払いを3つ等間隔に並べる ===== */
+.acc-group:not(.tree-group) { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.acc-group:not(.tree-group) > .acc > summary, .folder-head {
+  display: flex !important; flex-direction: column; align-items: flex-start; justify-content: flex-start;
+  gap: 6px; min-height: 104px; padding: 12px; position: relative;
+}
+.acc-group:not(.tree-group) > .acc > summary h2 { font-size: .8rem; }
+.acc-group:not(.tree-group) > .acc .sum-val, .folder-head .sum-val {
+  margin: auto 0 0 !important; font-size: .9rem; font-weight: 800; color: var(--text); max-width: 100%;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* フォルダは見出しを3つ目のタイルにし、中身はその下の行いっぱいに開く */
+.folder { display: contents; }
+.folder-head { background: var(--panel); border-radius: var(--radius); box-shadow: var(--shadow); font: inherit; }
+.folder-head .folder-title { font-size: .8rem; font-weight: 700; }
+.folder-head .chev { position: absolute; top: 12px; right: 10px; }
+.folder.open .folder-head { box-shadow: 0 0 0 2px color-mix(in srgb, var(--kind) 45%, transparent), var(--shadow); }
+.folder > .collapse { grid-column: 1 / -1; }
+.folder.open > .collapse { margin-top: 2px; }
+.folder .collapse-inner { background: var(--panel); border-radius: var(--radius); box-shadow: var(--shadow); }
+.acc-group.tree-group { margin: 0; padding: 14px 14px 14px 30px; }
+.tree-group::before { left: 30px; top: 14px; bottom: 42px; }
+.tree-group > .acc { margin-left: 16px !important; }
+@media (prefers-color-scheme: dark) { .folder-head, .folder .collapse-inner { border: 1px solid var(--border); } }
+.acc-group:not(.tree-group) > .acc .sum-val, .folder-head .sum-val { margin: 0 !important; line-height: 1.3; }
+.acc-group:not(.tree-group) > .acc > summary h2, .folder-head .folder-title { line-height: 1.3; margin: 0; }
+.folder-head { line-height: 1.3; }
