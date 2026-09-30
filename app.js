@@ -406,48 +406,6 @@
     $('thirdAmount').value = state.withdrawals[ws[2].key] ?? '';
   }
 
-  // 入力の一覧はツリーにして、1件1行（名前・内容・金額）。押すとその項目の入力欄が開く
-  const openItems = new Set();
-  function treeItem(li, id, fields, summary) {
-    li.classList.add('tree-item');
-    if (openItems.has(id)) li.classList.add('open');
-    const row = document.createElement('button');
-    row.type = 'button';
-    row.className = 'tree-row';
-    const title = document.createElement('span');
-    title.className = 'tree-title';
-    const meta = document.createElement('span');
-    meta.className = 'tree-meta';
-    const value = document.createElement('span');
-    value.className = 'tree-value';
-    const text = document.createElement('span');
-    text.className = 'tree-text';
-    text.append(title, meta);
-    row.append(text, value);
-    row.insertAdjacentHTML('beforeend', '<svg class="icon chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>');
-    row.onclick = () => {
-      li.classList.toggle('open');
-      if (li.classList.contains('open')) openItems.add(id); else openItems.delete(id);
-    };
-    const body = document.createElement('div');
-    body.className = 'collapse';
-    const inner = document.createElement('div');
-    inner.className = 'collapse-inner';
-    inner.appendChild(fields);
-    body.appendChild(inner);
-    const refresh = () => {
-      const v = summary();
-      title.textContent = v.title || '（名前なし）';
-      meta.textContent = v.meta;
-      value.textContent = v.value;
-    };
-    fields.addEventListener('input', refresh);
-    fields.addEventListener('change', refresh);
-    refresh();
-    li.append(row, body);
-  }
-  const selText = (sel) => (sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].text : '');
-
   function renderFixedCosts() {
     const t = today();
     const key = monthKey(t);
@@ -455,8 +413,7 @@
     ul.innerHTML = '';
     state.fixedCosts.forEach((fc, idx) => {
       const li = document.createElement('li');
-      const fields = document.createElement('div');
-      fields.className = 'fixed';
+      li.className = 'fixed';
 
       const name = document.createElement('input');
       name.type = 'text';
@@ -533,12 +490,7 @@
       checks.className = 'checks';
       checks.append(credit, paid);
 
-      fields.append(name, del, dayLabel, amountLabel, accountLabel, checks);
-      treeItem(li, fc.id, fields, () => ({
-        title: fc.name,
-        meta: `毎月${selText(day)} · ${fc.credit ? 'カード' : selText(account)}${fc.paid.includes(key) ? ' · 支払済み' : ''}`,
-        value: `${comma(num(fc.amount))}円`,
-      }));
+      li.append(name, del, dayLabel, amountLabel, accountLabel, checks);
       ul.appendChild(li);
     });
   }
@@ -994,8 +946,7 @@
     const changed = () => { save(); render(); };
     [...state.installments].sort((a, b) => (a.month < b.month ? 1 : -1)).forEach((it) => {
       const li = document.createElement('li');
-      const fields = document.createElement('div');
-      fields.className = 'fixed inst';
+      li.className = 'fixed inst';
 
       const month = document.createElement('input');
       month.type = 'month';
@@ -1054,12 +1005,7 @@
       amount.oninput = () => { it.amount = amount.value; showPer(); changed(); };
       showPer();
 
-      fields.append(name, del, monthLabel, timesLabel, amountLabel, per);
-      treeItem(li, it.id, fields, () => ({
-        title: it.name,
-        meta: `${it.month ? `${Number(it.month.split('-')[1])}月` : ''} · ${it.times}回払い`,
-        value: `${comma(num(it.amount))}円`,
-      }));
+      li.append(name, del, monthLabel, timesLabel, amountLabel, per);
       ul.appendChild(li);
     });
   }
@@ -1071,8 +1017,7 @@
     const changed = () => { save(); render(); };
     state.subscriptions.forEach((it) => {
       const li = document.createElement('li');
-      const fields = document.createElement('div');
-      fields.className = 'fixed sub';
+      li.className = 'fixed sub';
 
       const name = document.createElement('input');
       name.type = 'text';
@@ -1103,34 +1048,27 @@
       amountLabel.className = 'fc-amount';
       amountLabel.append('月額（円）', amount);
 
-      fields.append(name, del, amountLabel);
-      treeItem(li, it.id, fields, () => ({ title: it.name, meta: '毎月', value: `${comma(num(it.amount))}円` }));
+      li.append(name, del, amountLabel);
       ul.appendChild(li);
     });
   }
 
   $('addSub').addEventListener('click', () => {
-    const id = Date.now().toString(36);
-    openItems.add(id);
-    state.subscriptions.push({ id, name: '', amount: '' });
+    state.subscriptions.push({ id: Date.now().toString(36), name: '', amount: '' });
     save();
     renderSubscriptions();
     render();
   });
 
   $('addInst').addEventListener('click', () => {
-    const id = Date.now().toString(36);
-    openItems.add(id);
-    state.installments.push({ id, month: monthKey(today()), name: '', times: 3, amount: '' });
+    state.installments.push({ id: Date.now().toString(36), month: monthKey(today()), name: '', times: 3, amount: '' });
     save();
     renderInstallments();
     render();
   });
 
   $('addFixed').addEventListener('click', () => {
-    const id = Date.now().toString(36);
-    openItems.add(id);
-    state.fixedCosts.push({ id, name: '', day: 31, amount: '', paid: [], credit: false, account: 'mufg' });
+    state.fixedCosts.push({ id: Date.now().toString(36), name: '', day: 31, amount: '', paid: [], credit: false, account: 'mufg' });
     save();
     renderFixedCosts();
     render();
