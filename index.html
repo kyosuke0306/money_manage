@@ -39,7 +39,10 @@
   </header>
 
   <main id="mainView">
-    <section class="panel savings">
+    <div class="flip" id="flip">
+      <div class="flip-inner">
+    <section class="panel savings flip-face flip-front" id="flipFront" role="button" tabindex="0" aria-label="裏返して入力を表示">
+      <span class="flip-hint"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 0 1 14-5.3M20 4v4h-4M20 12a8 8 0 0 1-14 5.3M4 20v-4h4"/></svg>入力</span>
       <div class="savings-main">
         <div class="savings-label">現時点の本当の貯金</div>
         <div class="savings-amt" id="trueSavings"></div>
@@ -49,38 +52,11 @@
         <b class="savings-sub-amt" id="canUseToday"></b>
       </div>
     </section>
-
-    <details class="panel shortage" id="shortage" hidden>
-      <summary><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 2.5 20h19L12 3.5z"/><path d="M12 10v4.5M12 17.5h.01"/></svg><span class="shortage-title">払えなくなる支払い</span><span class="shortage-count" id="shortageCount"></span><svg class="icon chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
-      <ul id="shortageList"></ul>
-    </details>
-
-    <section class="panel cal-panel">
-      <div class="month-nav">
-        <span id="monthTitle"></span>
-        <button type="button" id="helpButton" class="help-button" aria-label="ヘルプ" aria-expanded="false">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.8"/><path d="M12 17.2h.01"/></svg>
-        </button>
-      </div>
-      <button type="button" class="inst-mark" id="instMark" aria-label="分割払いの記録"></button>
-      <div class="help" id="help" hidden>
-        <div class="legend">
-          <span><i class="sw low"></i>引き落とし後〜給料日（本当の貯金）</span>
-          <span><i class="sw high"></i>給料日後〜引き落とし</span>
-          <span><b class="minus-text">赤字</b>＝マイナス</span>
-        </div>
-        <div class="legend">
-          <span><b>残高</b>：その日の口座残高（変わる日だけ表示）</span>
-          <span><b class="use-text">使える</b>：その日にカードで使っていい金額。その分が引き落とされた後も、本当の貯金（その引き落とし後〜次の給料日の残高）がマイナスにならない上限</span>
-        </div>
-        <div class="legend">
-          <span>カレンダーの左右の端をタップ、または左右にスワイプで月を切り替え</span>
-        </div>
-      </div>
-      <div class="calendar" id="calendar"></div>
-    </section>
-
-    <h3 class="group-label">入力</h3>
+        <section class="flip-face flip-back" aria-label="入力">
+          <div class="flip-back-head">
+            <span class="group-label">入力</span>
+            <button type="button" class="flip-return" id="flipBack"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 0 1 14-5.3M20 4v4h-4M20 12a8 8 0 0 1-14 5.3M4 20v-4h4"/></svg>本当の貯金</button>
+          </div>
     <div class="acc-group">
     <details class="panel acc kind-balance">
       <summary><h2>今の残高</h2><span class="sum-val" id="balanceSum"></span><svg class="icon chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
@@ -142,6 +118,40 @@
       </div></div>
     </div>
     </div>
+        </section>
+      </div>
+    </div>
+
+    <details class="panel shortage" id="shortage" hidden>
+      <summary><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 2.5 20h19L12 3.5z"/><path d="M12 10v4.5M12 17.5h.01"/></svg><span class="shortage-title">払えなくなる支払い</span><span class="shortage-count" id="shortageCount"></span><svg class="icon chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+      <ul id="shortageList"></ul>
+    </details>
+
+    <section class="panel cal-panel">
+      <div class="month-nav">
+        <span id="monthTitle"></span>
+        <button type="button" id="helpButton" class="help-button" aria-label="ヘルプ" aria-expanded="false">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.8"/><path d="M12 17.2h.01"/></svg>
+        </button>
+      </div>
+      <button type="button" class="inst-mark" id="instMark" aria-label="分割払いの記録"></button>
+      <div class="help" id="help" hidden>
+        <div class="legend">
+          <span><i class="sw low"></i>引き落とし後〜給料日（本当の貯金）</span>
+          <span><i class="sw high"></i>給料日後〜引き落とし</span>
+          <span><b class="minus-text">赤字</b>＝マイナス</span>
+        </div>
+        <div class="legend">
+          <span><b>残高</b>：その日の口座残高（変わる日だけ表示）</span>
+          <span><b class="use-text">使える</b>：その日にカードで使っていい金額。その分が引き落とされた後も、本当の貯金（その引き落とし後〜次の給料日の残高）がマイナスにならない上限</span>
+        </div>
+        <div class="legend">
+          <span>カレンダーの左右の端をタップ、または左右にスワイプで月を切り替え</span>
+        </div>
+      </div>
+      <div class="calendar" id="calendar"></div>
+    </section>
+
   </main>
 
   <main id="statementsView" hidden>

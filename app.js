@@ -1148,8 +1148,9 @@
     icon.className = 'tile-icon';
     icon.innerHTML = `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${TILE_ICONS[sumVal.id] || ''}</svg>`;
     summary.prepend(icon);
+    // シートは body 直下に置く（裏返すカードの中だと画面に固定できないため）
     const sheet = document.createElement('div');
-    sheet.className = 'sheet';
+    sheet.className = `sheet ${[...d.classList].find((c) => c.startsWith('kind-')) || ''}`;
     const head = document.createElement('div');
     head.className = 'sheet-head';
     const title = summary.querySelector('h2').cloneNode(true);
@@ -1162,14 +1163,24 @@
     head.append(title, close);
     sheet.appendChild(head);
     while (summary.nextSibling) sheet.appendChild(summary.nextSibling);
-    d.appendChild(sheet);
+    document.body.appendChild(sheet);
     d.addEventListener('toggle', () => {
       if (d.open) accs.forEach((o) => { if (o !== d) o.open = false; });
+      sheet.classList.toggle('show', d.open);
       const any = accs.some((o) => o.open);
       document.body.classList.toggle('sheet-open', any);
     });
   }
   backdrop.addEventListener('click', closeSheets);
+
+  // 本当の貯金のカードを裏返すと入力の3つが見える
+  const flip = (on) => {
+    $('flip').classList.toggle('flipped', on);
+    $('flipFront').setAttribute('aria-hidden', on);
+  };
+  $('flipFront').addEventListener('click', () => flip(true));
+  $('flipFront').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(true); } });
+  $('flipBack').addEventListener('click', () => flip(false));
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheets(); });
 
   renderLabels();

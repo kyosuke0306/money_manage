@@ -389,7 +389,7 @@ button.add { border-width: 1px; border-radius: 10px; font-size: .9rem; }
 .sheet-backdrop { position: fixed; inset: 0; background: rgba(10,15,30,.45); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 40; }
 body.sheet-open .sheet-backdrop { opacity: 1; pointer-events: auto; }
 body.sheet-open { overflow: hidden; }
-.acc-group > .acc > .sheet {
+.sheet {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; margin: 0 auto; max-width: 560px;
   max-height: 86vh; overflow-y: auto; overscroll-behavior: contain;
   background: var(--panel); border-radius: 20px 20px 0 0; box-shadow: 0 -8px 30px rgba(0,0,0,.2);
@@ -504,3 +504,33 @@ body.sheet-open { overflow: hidden; }
 .popup-sheet .fixed-list .fixed input:not([type="checkbox"]):not([type="number"]), .popup-sheet .fixed-list .fixed select { background: var(--panel); }
 .popup-sheet .inst .inst-times { grid-column: 1 / -1; }
 .popup-sheet input[type="number"] { color: var(--minus); font-weight: 700; background: var(--expense-bg) !important; border-color: color-mix(in srgb, var(--minus) 35%, transparent); }
+
+/* ===== 本当の貯金のカード（裏返すと入力） ===== */
+.sheet:not(.show) { display: none; }
+.sheet[class*="kind-"] input[type="number"] { color: var(--kind); font-weight: 700; background: var(--kind-bg); border-color: color-mix(in srgb, var(--kind) 35%, transparent); }
+.sheet h2 small { font-size: .7rem; font-weight: 600; color: #fff; background: var(--kind); border-radius: 4px; padding: 1px 6px; margin-left: 6px; vertical-align: 2px; }
+
+.flip { perspective: 1400px; margin-bottom: 14px; }
+.flip-inner { display: grid; transition: transform .7s cubic-bezier(.3,.9,.3,1); transform-style: preserve-3d; }
+.flip.flipped .flip-inner { transform: rotateY(180deg); }
+.flip-face { grid-area: 1 / 1; margin: 0 !important; -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+.flip-front { cursor: pointer; }
+.flip.flipped .flip-front, .flip:not(.flipped) .flip-back { pointer-events: none; }
+.flip-back { transform: rotateY(180deg); background: var(--panel); border-radius: var(--radius); box-shadow: var(--shadow); padding: 10px 10px 12px; align-self: start; min-height: 100%; }
+@media (prefers-color-scheme: dark) { .flip-back { border: 1px solid var(--border); } }
+.flip-hint { position: absolute; top: 14px; right: 14px; z-index: 1; display: flex; align-items: center; gap: 4px; font-size: .7rem; font-weight: 700; color: rgba(255,255,255,.85); background: rgba(255,255,255,.14); border-radius: 999px; padding: 3px 9px 3px 7px; }
+.flip-hint .icon { width: 13px; height: 13px; }
+.flip-back-head { display: flex; align-items: center; justify-content: space-between; margin: 0 2px 8px; }
+.flip-back-head .group-label { margin: 0; }
+.flip-return { width: auto; display: flex; align-items: center; gap: 4px; padding: 4px 10px 4px 8px; font-size: .72rem; font-weight: 700; border: none; border-radius: 999px; background: var(--balance-bg); color: var(--use); }
+.flip-return .icon { width: 13px; height: 13px; }
+/* 裏面のタイルはカードの中に並べる */
+.flip-back .acc-group { margin-bottom: 0; }
+.flip-back .acc-group:not(.tree-group) > .acc, .flip-back .folder-head { background: var(--bg); box-shadow: none; }
+.flip-back .acc-group:not(.tree-group) > .acc > summary, .flip-back .folder-head { min-height: 96px; }
+.flip-back .folder .collapse-inner { background: var(--bg); box-shadow: none; }
+.flip-back .tree-group > .acc { background: var(--panel); }
+/* シートを外に出したので、見出し（summary）が最後の子になっても余白を付けない */
+.acc > summary:last-child { margin-bottom: 0 !important; }
+.flip-back .acc-group:not(.tree-group) > .acc > summary, .flip-back .folder-head { min-height: 88px; }
+.flip-front { display: flex; flex-direction: column; justify-content: center; }
