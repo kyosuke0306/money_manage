@@ -342,12 +342,14 @@ button.add { border-width: 1px; border-radius: 10px; font-size: .9rem; }
 
 /* ===== 本当の貯金（メインのカード） ===== */
 .savings {
-  position: relative; overflow: hidden; color: #fff; border: none !important;
-  background: radial-gradient(120% 140% at 100% 0%, #3b6cf0 0%, #1f3fae 45%, #121b45 100%);
+  position: relative; color: #fff; border: none !important;
+  /* 右上の飾りの円も背景で描く（はみ出しを隠す overflow を使うと Safari で裏返しがちらつくため） */
+  background:
+    radial-gradient(circle at calc(100% - 40px) 40px, rgba(255,255,255,.07) 0 80px, transparent 81px),
+    radial-gradient(120% 140% at 100% 0%, #3b6cf0 0%, #1f3fae 45%, #121b45 100%);
   box-shadow: 0 10px 30px rgba(25,50,140,.3);
   padding: 20px 20px 16px;
 }
-.savings::after { content: ""; position: absolute; right: -40px; top: -40px; width: 160px; height: 160px; border-radius: 50%; background: rgba(255,255,255,.07); }
 .savings-main { text-align: left; padding-bottom: 14px; }
 .savings .savings-label { color: rgba(255,255,255,.7); font-size: .75rem; font-weight: 600; letter-spacing: .08em; }
 .savings .savings-amt { color: #fff; font-size: 2.4rem; font-weight: 800; letter-spacing: -.01em; line-height: 1.2; margin-top: 2px; }
@@ -510,15 +512,24 @@ body.sheet-open { overflow: hidden; }
 .sheet[class*="kind-"] input[type="number"] { color: var(--kind); font-weight: 700; background: var(--kind-bg); border-color: color-mix(in srgb, var(--kind) 35%, transparent); }
 .sheet h2 small { font-size: .7rem; font-weight: 600; color: #fff; background: var(--kind); border-radius: 4px; padding: 1px 6px; margin-left: 6px; vertical-align: 2px; }
 
-.flip { perspective: 1400px; margin-bottom: 14px; }
-.flip-inner { display: grid; transition: transform .7s cubic-bezier(.3,.9,.3,1); transform-style: preserve-3d; }
+/* 裏返すカード: 表は普通に並べ、裏は表の上に重ねる。カードの高さは見えている面に合わせて JS で指定する */
+.flip { perspective: 1200px; margin-bottom: 14px; }
+.flip-inner {
+  position: relative; transform-style: preserve-3d; -webkit-transform-style: preserve-3d;
+  transition: transform .6s cubic-bezier(.45,.05,.55,.95);
+}
+.flip.ready .flip-inner { transition: transform .6s cubic-bezier(.45,.05,.55,.95), height .35s cubic-bezier(.2,.8,.2,1); }
+.flip-front { display: flex; flex-direction: column; justify-content: center; box-sizing: border-box; }
 .flip.flipped .flip-inner { transform: rotateY(180deg); }
-.flip-face { grid-area: 1 / 1; margin: 0 !important; -webkit-backface-visibility: hidden; backface-visibility: hidden; }
-.flip-front { cursor: pointer; }
+.flip-face { margin: 0 !important; -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+.flip-front { position: relative; cursor: pointer; transform: rotateY(0deg); }
+.flip-back {
+  position: absolute; top: 0; left: 0; right: 0; transform: rotateY(180deg);
+  background: var(--panel); border-radius: var(--radius); box-shadow: var(--shadow); padding: 10px 10px 12px;
+}
 .flip.flipped .flip-front, .flip:not(.flipped) .flip-back { pointer-events: none; }
-.flip-back { transform: rotateY(180deg); background: var(--panel); border-radius: var(--radius); box-shadow: var(--shadow); padding: 10px 10px 12px; align-self: start; min-height: 100%; }
 @media (prefers-color-scheme: dark) { .flip-back { border: 1px solid var(--border); } }
-.flip-hint { position: absolute; top: 14px; right: 14px; z-index: 1; display: flex; align-items: center; gap: 4px; font-size: .7rem; font-weight: 700; color: rgba(255,255,255,.85); background: rgba(255,255,255,.14); border-radius: 999px; padding: 3px 9px 3px 7px; }
+.flip-hint { position: absolute; top: 14px; right: 14px; display: flex; align-items: center; gap: 4px; font-size: .7rem; font-weight: 700; color: rgba(255,255,255,.85); background: rgba(255,255,255,.14); border-radius: 999px; padding: 3px 9px 3px 7px; }
 .flip-hint .icon { width: 13px; height: 13px; }
 .flip-back-head { display: flex; align-items: center; justify-content: space-between; margin: 0 2px 8px; }
 .flip-back-head .group-label { margin: 0; }
@@ -533,14 +544,6 @@ body.sheet-open { overflow: hidden; }
 /* シートを外に出したので、見出し（summary）が最後の子になっても余白を付けない */
 .acc > summary:last-child { margin-bottom: 0 !important; }
 .flip-back .acc-group:not(.tree-group) > .acc > summary, .flip-back .folder-head { min-height: 88px; }
-.flip-front { display: flex; flex-direction: column; justify-content: center; }
-
-/* 裏返したとき、見えていない面の中身（飾りの円やボタン）が透けないように、回転の途中で隠す */
-.flip-inner { grid-template-columns: minmax(0, 1fr); }
-.flip-front, .flip-back { visibility: visible; transition: visibility 0s .3s; }
-.flip.flipped .flip-front, .flip:not(.flipped) .flip-back { visibility: hidden; }
-.flip-back { -webkit-transform: rotateY(180deg) translateZ(1px); transform: rotateY(180deg) translateZ(1px); }
-.flip-face * { -webkit-backface-visibility: hidden; backface-visibility: hidden; }
 
 /* ===== ヘッダー: 英字のワードマーク ===== */
 .app-header { align-items: flex-end; padding: 18px 18px 8px; }
@@ -564,8 +567,3 @@ body.sheet-open { overflow: hidden; }
 .folder.open > .collapse { margin-top: 0; }
 .folder > .collapse > .collapse-inner { margin-top: 2px; }
 
-/* 裏返し: 90°（半分の時間）でちょうど面が入れ替わるよう、前後対称の動きにする */
-.flip-inner { transition: transform .6s cubic-bezier(.45,.05,.55,.95); }
-.flip-front, .flip-back { transition: visibility 0s .3s; }
-.flip.flipped .flip-inner { transform: rotateY(180deg); }
-.flip { perspective: 1200px; }

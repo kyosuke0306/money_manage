@@ -1187,10 +1187,30 @@
   backdrop.addEventListener('click', closeSheets);
 
   // 本当の貯金のカードを裏返すと入力の3つが見える
+  const flipInner = document.querySelector('.flip-inner');
+  const flipBackFace = document.querySelector('.flip-back');
+  // カードの高さは見えている面の高さにする（支払いを閉じたり表に戻したりすると元の高さに戻る）
+  const fitFlip = () => {
+    // 表は、支払いを閉じた状態の裏と同じ高さにそろえる（裏返しても大きさが変わらない）
+    const payBody = $('payFolder').querySelector('.collapse');
+    $('flipFront').style.minHeight = `${flipBackFace.offsetHeight - payBody.offsetHeight}px`;
+    const face = $('flip').classList.contains('flipped') ? flipBackFace : $('flipFront');
+    flipInner.style.height = `${face.offsetHeight}px`;
+  };
   const flip = (on) => {
     $('flip').classList.toggle('flipped', on);
     $('flipFront').setAttribute('aria-hidden', on);
+    fitFlip();
   };
+  if (window.ResizeObserver) {
+    const ro = new ResizeObserver(fitFlip);
+    ro.observe($('flipFront'));
+    ro.observe(flipBackFace);
+  }
+  window.addEventListener('resize', fitFlip);
+  fitFlip();
+  // 最初の表示では高さを動かさない
+  requestAnimationFrame(() => requestAnimationFrame(() => $('flip').classList.add('ready')));
   $('flipFront').addEventListener('click', () => flip(true));
   $('flipFront').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(true); } });
   $('flipBack').addEventListener('click', () => {
