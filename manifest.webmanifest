@@ -1,6 +1,6 @@
 {
-  "name": "お金の管理",
-  "short_name": "お金の管理",
+  "name": "Money",
+  "short_name": "Money",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#f4f6fa",
