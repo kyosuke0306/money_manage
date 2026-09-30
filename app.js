@@ -780,6 +780,8 @@
     $('subSum').textContent = state.subscriptions.length
       ? `${state.subscriptions.length}件 月${comma(subTotal)}円`
       : 'なし';
+    // 支払いフォルダ: まとめている項目の数
+    $('paySum').textContent = `${document.querySelectorAll('.tree-group > .acc').length}項目`;
     $('fixedSum').textContent = `月 ${comma(state.fixedCosts.reduce((a, fc) => a + num(fc.amount), 0))}円`;
   }
 
@@ -1135,6 +1137,11 @@
   backdrop.className = 'sheet-backdrop';
   document.body.appendChild(backdrop);
   const accs = [...document.querySelectorAll('.acc-group > details.acc')];
+  // 支払いの項目はフォルダにまとめ、押したときだけツリーで開く
+  $('payFolderHead').addEventListener('click', () => {
+    const open = $('payFolder').classList.toggle('open');
+    $('payFolderHead').setAttribute('aria-expanded', open);
+  });
   const closeSheets = () => accs.forEach((d) => { d.open = false; });
   for (const d of accs) {
     const summary = d.querySelector('summary');

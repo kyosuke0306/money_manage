@@ -100,6 +100,15 @@
       <label class="mt">入金口座<select id="salaryAccount"></select></label>
     </details>
 
+    <div class="folder kind-expense" id="payFolder">
+      <button type="button" class="folder-head" id="payFolderHead" aria-expanded="false">
+        <span class="tile-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>
+        <span class="folder-title">支払い</span>
+        <span class="sum-val" id="paySum"></span>
+        <svg class="icon chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="collapse"><div class="collapse-inner">
+    <div class="acc-group tree-group">
     <details class="panel acc kind-expense">
       <summary><h2>クレジット <small>支出</small></h2><span class="sum-val" id="cardSum"></span><svg class="icon chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
       <div class="row mb">
@@ -136,6 +145,9 @@
       <ul id="fixedList" class="fixed-list"></ul>
       <button type="button" id="addFixed" class="add">＋ 固定費を追加</button>
     </details>
+    </div>
+      </div></div>
+    </div>
     </div>
   </main>
 

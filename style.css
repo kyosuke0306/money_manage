@@ -405,3 +405,40 @@ body.sheet-open { overflow: hidden; }
 .sheet > button.add { width: 100%; }
 .sheet .fixed-list .fixed { background: var(--bg); }
 .sheet .fixed-list .fixed input:not([type="checkbox"]):not([type="number"]), .sheet .fixed-list .fixed select { background: var(--panel); }
+
+/* ===== 支払いフォルダ（押すとツリーで開く） ===== */
+.folder { grid-column: 1 / -1; background: var(--panel); border-radius: var(--radius); box-shadow: var(--shadow); }
+@media (prefers-color-scheme: dark) { .folder { border: 1px solid var(--border); } }
+.folder-head { display: flex; align-items: center; gap: 10px; width: 100%; padding: 14px; border: none; background: transparent; border-radius: var(--radius); text-align: left; color: var(--text); }
+.folder-head:active { transform: scale(.99); }
+.folder-head .tile-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--kind-bg); color: var(--kind); flex: none; }
+.folder-head .tile-icon .icon { width: 19px; height: 19px; }
+.folder-title { font-size: .95rem; font-weight: 800; }
+.folder-head .sum-val { margin-left: auto; font-size: .82rem; font-weight: 700; color: var(--muted); }
+.folder-head .chev { width: 18px; height: 18px; color: var(--muted); transition: transform .35s cubic-bezier(.2,.8,.2,1); }
+.folder.open .folder-head .chev { transform: rotate(180deg); }
+
+/* 高さを 0 → 中身の高さへ動かして開閉する */
+.folder > .collapse { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .35s cubic-bezier(.2,.8,.2,1); }
+.folder.open > .collapse { grid-template-rows: 1fr; }
+.folder .collapse-inner { overflow: hidden; min-height: 0; }
+
+/* 中身: 左の縦線から枝分かれしたツリー */
+.acc-group.tree-group { display: block; position: relative; margin: 0 14px 0 30px; padding: 0 0 14px; }
+.tree-group::before { content: ""; position: absolute; left: 0; top: 0; bottom: 42px; border-left: 2px solid color-mix(in srgb, var(--kind) 30%, transparent); }
+.tree-group > .acc { position: relative; margin: 0 0 8px 16px !important; background: var(--bg); box-shadow: none; border-radius: 12px !important; }
+.tree-group > .acc:last-child { margin-bottom: 0 !important; }
+.tree-group > .acc::before { content: ""; position: absolute; left: -16px; top: 50%; width: 14px; border-top: 2px solid color-mix(in srgb, var(--kind) 30%, transparent); }
+.tree-group > .acc[open]::before { top: 28px; }
+.tree-group > .acc > summary { display: flex !important; align-items: center; gap: 10px; min-height: 0 !important; padding: 11px 12px !important; border-radius: 12px; }
+.tree-group .tile-icon { width: 30px !important; height: 30px !important; border-radius: 8px !important; flex: none; }
+.tree-group .tile-icon .icon { width: 17px !important; height: 17px !important; }
+.tree-group > .acc > summary h2 { font-size: .86rem !important; }
+.tree-group > .acc .sum-val { margin-left: auto !important; font-size: .82rem !important; width: auto; }
+/* 開くときに1行ずつずらして出てくる */
+.tree-group > .acc > summary { opacity: 0; transform: translateX(-10px); transition: opacity .25s ease, transform .35s cubic-bezier(.2,.8,.2,1); }
+.folder.open .tree-group > .acc > summary { opacity: 1; transform: none; }
+.folder.open .tree-group > .acc:nth-child(1) > summary { transition-delay: .05s; }
+.folder.open .tree-group > .acc:nth-child(2) > summary { transition-delay: .1s; }
+.folder.open .tree-group > .acc:nth-child(3) > summary { transition-delay: .15s; }
+.folder.open .tree-group > .acc:nth-child(4) > summary { transition-delay: .2s; }
