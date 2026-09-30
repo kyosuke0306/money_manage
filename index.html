@@ -50,10 +50,10 @@
       </div>
     </section>
 
-    <section class="panel shortage" id="shortage" hidden>
-      <button type="button" class="shortage-head" id="shortageHead" aria-expanded="false"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 2.5 20h19L12 3.5z"/><path d="M12 10v4.5M12 17.5h.01"/></svg><span class="shortage-title">払えなくなる支払い</span><span class="shortage-count" id="shortageCount"></span><svg class="icon chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
-      <div class="collapse"><div class="collapse-inner"><ul id="shortageList"></ul></div></div>
-    </section>
+    <details class="panel shortage" id="shortage" hidden>
+      <summary><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 2.5 20h19L12 3.5z"/><path d="M12 10v4.5M12 17.5h.01"/></svg><span class="shortage-title">払えなくなる支払い</span><span class="shortage-count" id="shortageCount"></span><svg class="icon chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+      <ul id="shortageList"></ul>
+    </details>
 
     <section class="panel cal-panel">
       <div class="month-nav">
