@@ -477,3 +477,30 @@ body.sheet-open { overflow: hidden; }
 /* パネル上端（タイルの真下）から左へ曲がって幹につながる */
 .tree-group::after { content: ""; position: absolute; top: 0; left: 30px; height: 14px; width: calc((100% - 16px) * 5 / 6 + 16px - 30px); border-right: 2px solid color-mix(in srgb, var(--kind) 30%, transparent); border-bottom: 2px solid color-mix(in srgb, var(--kind) 30%, transparent); border-bottom-right-radius: 10px; box-sizing: border-box; }
 .tree-group::before { top: 12px; border-top-left-radius: 0; }
+
+/* ===== 分割払い: カレンダーのマーク（オン/オフ）とポップアップ ===== */
+.inst-mark {
+  display: flex; align-items: center; gap: 6px; width: auto; margin: 2px auto 0; padding: 3px 10px;
+  font-size: .72rem; font-weight: 700; border-radius: 999px; border: 1px dashed var(--border);
+  background: transparent; color: var(--muted); transition: background .2s, color .2s, border-color .2s;
+}
+.inst-mark .dot { width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid currentColor; box-sizing: border-box; }
+.inst-mark.on { border: 1px solid color-mix(in srgb, var(--minus) 40%, transparent); background: var(--expense-bg); color: var(--minus); }
+.inst-mark.on .dot { background: currentColor; }
+.inst-mark:active { transform: scale(.96); }
+.popup-sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; margin: 0 auto; max-width: 560px;
+  max-height: 86vh; overflow-y: auto; overscroll-behavior: contain;
+  background: var(--panel); border-radius: 20px 20px 0 0; box-shadow: 0 -8px 30px rgba(0,0,0,.2);
+  padding: 8px 16px calc(24px + env(safe-area-inset-bottom));
+  animation: sheet-up .24s cubic-bezier(.2,.8,.2,1);
+}
+.popup-sheet[hidden] { display: none; }
+.popup-sheet::before { content: ""; display: block; width: 40px; height: 4px; border-radius: 2px; background: var(--border); margin: 0 auto 8px; }
+.popup-sheet .sheet-head h2 { color: var(--minus) !important; }
+.popup-month { font-size: .85rem; color: var(--muted); font-weight: 700; }
+.popup-sheet > button.add { width: 100%; }
+.popup-sheet .fixed-list .fixed { background: var(--bg); }
+.popup-sheet .fixed-list .fixed input:not([type="checkbox"]):not([type="number"]), .popup-sheet .fixed-list .fixed select { background: var(--panel); }
+.popup-sheet .inst .inst-times { grid-column: 1 / -1; }
+.popup-sheet input[type="number"] { color: var(--minus); font-weight: 700; background: var(--expense-bg) !important; border-color: color-mix(in srgb, var(--minus) 35%, transparent); }

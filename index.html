@@ -62,7 +62,7 @@
           <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.8"/><path d="M12 17.2h.01"/></svg>
         </button>
       </div>
-      <div class="month-inst" id="monthInst" hidden></div>
+      <button type="button" class="inst-mark" id="instMark" aria-label="分割払いの記録"></button>
       <div class="help" id="help" hidden>
         <div class="legend">
           <span><i class="sw low"></i>引き落とし後〜給料日（本当の貯金）</span>
@@ -127,13 +127,6 @@
     </details>
 
     <details class="panel acc kind-expense">
-      <summary><h2>分割払いの記録</h2><span class="sum-val" id="instSum"></span><svg class="icon chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
-      <p class="acc-note">カードを分割払いにした記録。計算には使わないので、引き落とし額は分割後の金額を入力してください。</p>
-      <ul id="instList" class="fixed-list"></ul>
-      <button type="button" id="addInst" class="add">＋ 分割払いを追加</button>
-    </details>
-
-    <details class="panel acc kind-expense">
       <summary><h2>サブスクの記録</h2><span class="sum-val" id="subSum"></span><svg class="icon chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
       <p class="acc-note">登録しているサブスクの記録。すべてカードの引き落とし額に含まれているので、計算には使いません。</p>
       <ul id="subList" class="fixed-list"></ul>
@@ -178,6 +171,13 @@
       <div class="scroll"><table id="cfTable" class="cf"></table></div>
     </section>
   </main>
+
+  <div class="popup-sheet kind-expense" id="instSheet" hidden>
+    <div class="sheet-head"><h2>分割払いの記録 <span class="popup-month" id="instSheetMonth"></span></h2><button type="button" class="sheet-close" id="instClose" aria-label="閉じる"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <p class="acc-note">カードを分割払いにした記録。計算には使わないので、引き落とし額は分割後の金額を入力してください。</p>
+    <ul id="instList" class="fixed-list"></ul>
+    <button type="button" id="addInst" class="add">＋ 分割払いを追加</button>
+  </div>
 
   <footer class="version" id="versionInfo" title="デプロイ情報">
     v__VERSION__ · __DEPLOYED_AT__
