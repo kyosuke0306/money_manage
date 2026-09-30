@@ -780,8 +780,9 @@
     $('subSum').textContent = state.subscriptions.length
       ? `${state.subscriptions.length}件 月${comma(subTotal)}円`
       : 'なし';
-    // 支払いフォルダ: まとめている項目の数
-    $('paySum').textContent = `${document.querySelectorAll('.tree-group > .acc').length}項目`;
+    // 支払いフォルダ: 次のカード引き落とし額＋口座から払う固定費（1ヶ月分）
+    const accountFixed = state.fixedCosts.filter((fc) => !fc.credit).reduce((a, fc) => a + num(fc.amount), 0);
+    $('paySum').textContent = `${comma(num(state.withdrawals[key]) + accountFixed)}円`;
     $('fixedSum').textContent = `月 ${comma(state.fixedCosts.reduce((a, fc) => a + num(fc.amount), 0))}円`;
   }
 

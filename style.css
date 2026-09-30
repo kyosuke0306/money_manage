@@ -470,3 +470,10 @@ body.sheet-open { overflow: hidden; }
 .acc-group:not(.tree-group) > .acc .sum-val, .folder-head .sum-val { margin: 0 !important; line-height: 1.3; }
 .acc-group:not(.tree-group) > .acc > summary h2, .folder-head .folder-title { line-height: 1.3; margin: 0; }
 .folder-head { line-height: 1.3; }
+
+/* ツリーの枝を「支払い」タイルの下から付け根としてつなぐ */
+.folder-head::after { content: ""; position: absolute; left: 50%; top: 100%; height: 10px; border-left: 2px solid color-mix(in srgb, var(--kind) 30%, transparent); opacity: 0; transition: opacity .2s; }
+.folder.open .folder-head::after { opacity: 1; }
+/* パネル上端（タイルの真下）から左へ曲がって幹につながる */
+.tree-group::after { content: ""; position: absolute; top: 0; left: 30px; height: 14px; width: calc((100% - 16px) * 5 / 6 + 16px - 30px); border-right: 2px solid color-mix(in srgb, var(--kind) 30%, transparent); border-bottom: 2px solid color-mix(in srgb, var(--kind) 30%, transparent); border-bottom-right-radius: 10px; box-sizing: border-box; }
+.tree-group::before { top: 12px; border-top-left-radius: 0; }
