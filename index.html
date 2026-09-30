@@ -16,7 +16,13 @@
 </head>
 <body>
   <header class="app-header">
-    <h1>お金の管理</h1>
+    <div class="brand">
+      <img src="icon.svg" class="brand-mark" alt="">
+      <div class="brand-text">
+        <h1>お金の管理</h1>
+        <div class="updated" id="updatedAt" hidden></div>
+      </div>
+    </div>
     <button type="button" id="syncButton" class="sync" hidden></button>
     <button type="button" id="menuButton" class="menu-button" aria-label="メニュー" aria-expanded="false">
       <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
@@ -34,7 +40,6 @@
   </header>
 
   <main id="mainView">
-    <div class="updated" id="updatedAt" hidden></div>
     <section class="panel savings">
       <div class="savings-main">
         <div class="savings-label">現時点の本当の貯金</div>
@@ -46,10 +51,10 @@
       </div>
     </section>
 
-    <section class="panel shortage" id="shortage" hidden>
-      <h2><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 2.5 20h19L12 3.5z"/><path d="M12 10v4.5M12 17.5h.01"/></svg>払えなくなる支払い</h2>
+    <details class="panel shortage" id="shortage" hidden>
+      <summary><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 2.5 20h19L12 3.5z"/><path d="M12 10v4.5M12 17.5h.01"/></svg><span class="shortage-title">払えなくなる支払い</span><span class="shortage-count" id="shortageCount"></span><svg class="icon chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
       <ul id="shortageList"></ul>
-    </section>
+    </details>
 
     <section class="panel cal-panel">
       <div class="month-nav">
@@ -76,6 +81,7 @@
       <div class="calendar" id="calendar"></div>
     </section>
 
+    <h3 class="group-label">入力</h3>
     <div class="acc-group">
     <details class="panel acc kind-balance">
       <summary><h2>今の残高</h2><span class="sum-val" id="balanceSum"></span><svg class="icon chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>

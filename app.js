@@ -564,6 +564,7 @@
       }
     }
     box.hidden = !list.children.length;
+    $('shortageCount').textContent = `${list.children.length}件`;
   }
 
   // 表に1行追加する。cls: 'head' 見出し / 'sum' 合計 / 'sub' 内訳
@@ -1120,6 +1121,51 @@
     },
     onChange: (fn) => changeListeners.push(fn),
   };
+
+  // 入力項目はタイルで並べ、押したときだけ下から開くシートで編集する
+  const TILE_ICONS = {
+    balanceSum: '<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M16 14.5h2"/>',
+    salarySum: '<path d="M12 3v18M16.5 7.5c0-1.7-2-3-4.5-3s-4.5 1.3-4.5 3 2 2.6 4.5 3 4.5 1.3 4.5 3-2 3-4.5 3-4.5-1.3-4.5-3"/>',
+    cardSum: '<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 9.5h19M6 15h4"/>',
+    instSum: '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5V12l6 4"/>',
+    subSum: '<path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v4h-4"/>',
+    fixedSum: '<path d="M4 20V10l8-6 8 6v10zM9.5 20v-6h5v6"/>',
+  };
+  const backdrop = document.createElement('div');
+  backdrop.className = 'sheet-backdrop';
+  document.body.appendChild(backdrop);
+  const accs = [...document.querySelectorAll('.acc-group > details.acc')];
+  const closeSheets = () => accs.forEach((d) => { d.open = false; });
+  for (const d of accs) {
+    const summary = d.querySelector('summary');
+    const sumVal = summary.querySelector('.sum-val');
+    const icon = document.createElement('span');
+    icon.className = 'tile-icon';
+    icon.innerHTML = `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${TILE_ICONS[sumVal.id] || ''}</svg>`;
+    summary.prepend(icon);
+    const sheet = document.createElement('div');
+    sheet.className = 'sheet';
+    const head = document.createElement('div');
+    head.className = 'sheet-head';
+    const title = summary.querySelector('h2').cloneNode(true);
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'sheet-close';
+    close.setAttribute('aria-label', '閉じる');
+    close.innerHTML = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+    close.onclick = () => { d.open = false; };
+    head.append(title, close);
+    sheet.appendChild(head);
+    while (summary.nextSibling) sheet.appendChild(summary.nextSibling);
+    d.appendChild(sheet);
+    d.addEventListener('toggle', () => {
+      if (d.open) accs.forEach((o) => { if (o !== d) o.open = false; });
+      const any = accs.some((o) => o.open);
+      document.body.classList.toggle('sheet-open', any);
+    });
+  }
+  backdrop.addEventListener('click', closeSheets);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheets(); });
 
   renderLabels();
   renderFixedCosts();
