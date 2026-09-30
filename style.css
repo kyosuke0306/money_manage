@@ -406,3 +406,102 @@ body.sheet-open { overflow: hidden; }
 .sheet > button.add { width: 100%; }
 .sheet .fixed-list .fixed { background: var(--bg); }
 .sheet .fixed-list .fixed input:not([type="checkbox"]):not([type="number"]), .sheet .fixed-list .fixed select { background: var(--panel); }
+
+/* ===== データベース管理画面風（ダーク固定） ===== */
+:root {
+  --bg: #121212; --panel: #1c1c1c; --panel-2: #232323; --text: #ededed; --muted: #8b8b8b; --border: #2e2e2e;
+  --primary: #3ecf8e; --plus: #3ecf8e; --minus: #ff6b6b; --use: #7cb3ff;
+  --low-bg: #33260f; --high-bg: #172235;
+  --balance-bg: #15223a; --income-bg: #11291d; --expense-bg: #2d1515;
+  --shadow: none; --radius: 10px;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, "Roboto Mono", monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); }
+.panel { background: var(--panel); border: 1px solid var(--border) !important; box-shadow: none; border-radius: var(--radius); }
+input, select, button { background: var(--panel-2); border-color: var(--border); border-radius: 6px; }
+input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(62,207,142,.18); }
+
+/* 数字は等幅 */
+.savings-amt, .savings-sub-amt, .sum-val, input[type="number"], .day .amt, .day .use, .shortage b, .shortage .lack,
+.statement td.num, .total b, .shortage-count, .app-header .updated, .version, #monthTitle, .inst-per {
+  font-family: var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+}
+
+/* ヘッダー */
+.app-header { padding: 12px 16px; border-bottom: 1px solid var(--border); max-width: none; position: sticky; top: 0; z-index: 30; background: rgba(18,18,18,.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.app-header > * { max-width: 560px; }
+.brand-mark { width: 30px; height: 30px; border-radius: 7px; box-shadow: none; border: 1px solid var(--border); }
+.app-header h1 { font-size: .98rem; letter-spacing: .04em; }
+.app-header .updated { font-size: .66rem; }
+.app-header .updated::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--primary); margin-right: 6px; vertical-align: 1px; box-shadow: 0 0 6px var(--primary); }
+.menu-button { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); box-shadow: none; border-radius: 8px; }
+.menu { background: var(--panel); border-color: var(--border); }
+.menu button.active { background: rgba(62,207,142,.1); color: var(--primary); }
+.menu button.active .icon { color: var(--primary); }
+main { padding-top: 14px; }
+
+/* 本当の貯金: メトリクスカード */
+.savings { background: var(--panel); color: var(--text); box-shadow: none; border: 1px solid var(--border) !important; padding: 16px 16px 12px; }
+.savings::after { display: none; }
+.savings::before { content: ""; position: absolute; left: 0; top: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--primary), transparent 70%); }
+.savings .savings-label { color: var(--muted); font-size: .72rem; letter-spacing: .06em; }
+.savings .savings-amt { color: var(--primary); font-size: 2.2rem; font-weight: 700; }
+.savings .savings-sub { border-top: 1px dashed var(--border); }
+.savings .savings-sub-amt { color: var(--text); font-weight: 600; }
+.savings .neg { color: var(--minus) !important; }
+
+/* 払えなくなる支払い */
+.shortage { background: var(--panel); border-color: rgba(255,107,107,.35) !important; }
+.shortage > summary { font-size: .85rem; }
+.shortage-count { background: rgba(255,107,107,.15); color: var(--minus); border: 1px solid rgba(255,107,107,.4); border-radius: 4px; }
+.shortage li { border-top: 1px solid var(--border); }
+
+/* カレンダー: グリッド */
+.cal-panel .help { background: var(--panel-2); }
+.calendar { gap: 3px; }
+.wd { font-family: var(--mono); text-transform: uppercase; letter-spacing: .08em; }
+.day { border: 1px solid var(--border); border-radius: 6px; background: var(--panel-2); }
+.day.low { background: var(--low-bg); border-color: rgba(255,180,80,.25); }
+.day.high { background: var(--high-bg); border-color: rgba(124,179,255,.2); }
+.day.past { background: transparent; border-color: transparent; opacity: .35; }
+.day.today { outline: 1.5px solid var(--primary); box-shadow: 0 0 0 3px rgba(62,207,142,.15); }
+.day .ev { border-radius: 3px; font-weight: 600; }
+.day .ev.in { background: rgba(62,207,142,.2); color: var(--plus); }
+.day .ev.out { background: rgba(255,107,107,.18); color: var(--minus); }
+.day .ev.fix { background: rgba(168,130,255,.2); color: #b89cff; }
+.day .ev.close { background: rgba(139,139,139,.2); color: var(--muted); }
+.day .ev.card { border-color: var(--border); }
+
+/* 入力: テーブル一覧風 */
+.group-label { font-family: var(--mono); text-transform: uppercase; font-size: .68rem; letter-spacing: .14em; margin: 20px 2px 8px; display: flex; align-items: center; gap: 8px; }
+.group-label::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+.acc-group { display: block; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.acc-group > .acc { border-radius: 0 !important; border: none !important; background: transparent; }
+.acc-group > .acc + .acc { border-top: 1px solid var(--border) !important; }
+.acc-group > .acc > summary { display: flex; align-items: center; gap: 12px; min-height: 0; padding: 12px 14px; border-radius: 0; }
+.acc-group > .acc > summary:hover { background: var(--panel-2); }
+.acc-group > .acc > summary:active { transform: none; background: var(--panel-2); }
+.acc-group .tile-icon { width: 28px; height: 28px; border-radius: 6px; border: 1px solid color-mix(in srgb, var(--kind) 35%, transparent); background: var(--kind-bg); }
+.acc-group .tile-icon .icon { width: 16px; height: 16px; }
+.acc-group > .acc > summary h2 { font-size: .88rem; font-weight: 600; }
+.acc-group > .acc .sum-val { margin-left: auto; font-size: .82rem; font-weight: 600; color: var(--muted); }
+.acc-group > .acc > summary .chev { display: block; transform: rotate(-90deg); width: 16px; height: 16px; color: var(--muted); }
+
+/* シート */
+.acc-group > .acc > .sheet { background: var(--panel); border: 1px solid var(--border); border-bottom: none; border-radius: 14px 14px 0 0; box-shadow: 0 -10px 40px rgba(0,0,0,.6); }
+.sheet-head { background: var(--panel); border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+.sheet-head h2 { font-size: .95rem !important; }
+.sheet-close { background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px; }
+.sheet .fixed-list .fixed { background: var(--panel-2); border-radius: 8px; }
+.sheet .fixed-list .fixed input:not([type="checkbox"]):not([type="number"]), .sheet .fixed-list .fixed select { background: var(--panel); }
+.panel h2 small { border-radius: 4px; }
+button.add { background: rgba(62,207,142,.06); border: 1px dashed rgba(62,207,142,.5); color: var(--primary); border-radius: 6px; }
+.fixed-list .fixed .del { color: var(--minus); }
+input[type="checkbox"] { accent-color: var(--primary); }
+
+/* 財務諸表 */
+.statement tr.head td { background: var(--panel-2); }
+.statement tr.grand td { border-top-color: var(--muted); }
+
+.version { color: var(--muted); }
