@@ -503,6 +503,13 @@
   }
 
   // マイナスになるとき、いつ・何が・いくら足りなくて払えないか
+  const CHEV = '<svg class="icon chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+  const openShort = new Set(); // 開いている「払えなくなる支払い」の項目
+  $('shortageHead').addEventListener('click', () => {
+    const open = $('shortage').classList.toggle('open');
+    $('shortageHead').setAttribute('aria-expanded', open);
+  });
+
   function renderShortage(days, transferDays) {
     const box = $('shortage');
     const list = $('shortageList');
@@ -526,13 +533,40 @@
         const short = Math.min(p.amt, -p.after);
         const li = document.createElement('li');
         const when = document.createElement('b');
-        when.textContent = `${md(d.date)}（${'日月火水木金土'[d.date.getDay()]}）`;
+        when.textContent = md(d.date);
+        const wd = document.createElement('small');
+        wd.textContent = '日月火水木金土'[d.date.getDay()];
+        when.appendChild(wd);
         const what = document.createElement('span');
-        what.textContent = `${p.name} ${comma(p.amt)}円`;
+        what.className = 'short-name';
+        what.textContent = p.name;
         const lack = document.createElement('span');
         lack.className = 'lack';
-        lack.textContent = `${ACCOUNTS[p.account]}の残高が` + (short === p.amt ? `足りず全額 ${comma(short)}円 払えない` : `${comma(short)}円 足りない`);
-        li.append(when, what, lack);
+        lack.textContent = `${comma(p.amt)}円の支払いで、${ACCOUNTS[p.account]}の残高が` + (short === p.amt ? `足りず全額 ${comma(short)}円 払えない` : `${comma(short)}円 足りない`);
+        // 1件ずつ、押すと詳しい内容が開く
+        const k = key(d, p);
+        li.className = 'short-item';
+        if (openShort.has(k)) li.classList.add('open');
+        const row = document.createElement('button');
+        row.type = 'button';
+        row.className = 'short-row';
+        const amt = document.createElement('span');
+        amt.className = 'short-amt';
+        amt.textContent = `−${comma(short)}円`;
+        const chev = document.createElement('span');
+        chev.innerHTML = CHEV;
+        row.append(when, what, amt, chev.firstChild);
+        row.onclick = () => {
+          li.classList.toggle('open');
+          if (li.classList.contains('open')) openShort.add(k); else openShort.delete(k);
+        };
+        const body = document.createElement('div');
+        body.className = 'collapse';
+        const inner = document.createElement('div');
+        inner.className = 'collapse-inner short-detail';
+        body.appendChild(inner);
+        inner.appendChild(lack);
+        li.append(row, body);
         if (p.account === 'yucho') {
           const tp = withTransfer.get(key(d, p));
           const note = document.createElement('div');
@@ -548,7 +582,7 @@
             note.classList.add('warn');
             note.textContent = `→ 三菱から送金しても ${comma(tp ? -tp.after : short)}円 足りません（三菱の残高も足りないため）`;
           }
-          li.appendChild(note);
+          inner.appendChild(note);
         }
         if (p.card) {
           // 支払い金額が確定する日までに分割にしないと払えない
@@ -558,7 +592,7 @@
           note.textContent = deadline >= today()
             ? `→ ${md(deadline)}（${'日月火水木金土'[deadline.getDay()]}）の支払い金額確定までに分割しないと払えません`
             : `→ ${md(deadline)} に支払い金額が確定済みのため、分割にはできません`;
-          li.appendChild(note);
+          inner.appendChild(note);
         }
         list.appendChild(li);
       }
