@@ -437,7 +437,7 @@
       const del = document.createElement('button');
       del.type = 'button';
       del.className = 'del';
-      del.textContent = '削除';
+      del.innerHTML = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>削除';
       del.onclick = () => {
         state.fixedCosts.splice(idx, 1);
         save();
@@ -964,7 +964,7 @@
       const del = document.createElement('button');
       del.type = 'button';
       del.className = 'del';
-      del.textContent = '削除';
+      del.innerHTML = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>削除';
       del.onclick = () => {
         state.installments = state.installments.filter((x) => x !== it);
         save();
@@ -1027,7 +1027,7 @@
       const del = document.createElement('button');
       del.type = 'button';
       del.className = 'del';
-      del.textContent = '削除';
+      del.innerHTML = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>削除';
       del.onclick = () => {
         state.subscriptions = state.subscriptions.filter((x) => x !== it);
         save();

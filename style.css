@@ -266,3 +266,20 @@ button.add { background: var(--primary); border-color: var(--primary); color: #f
 .month-inst { text-align: center; font-size: .72rem; color: var(--muted); margin-top: -2px; }
 .month-inst[hidden] { display: none; }
 .sub .fc-amount { grid-column: 1 / -1; }
+
+/* 一覧の各項目をカードにして、どこからどこまでが1件か分かるようにする */
+.fixed-list .fixed {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px 12px;
+  margin-bottom: 10px;
+  align-items: start;
+}
+.fixed-list .fixed input:not([type="checkbox"]):not([type="number"]), .fixed-list .fixed select { background: var(--panel); }
+.fixed-list .fixed input[type="text"] { font-weight: 700; }
+.fixed-list .fixed .del { display: flex; align-items: center; gap: 2px; border: none; background: transparent; color: var(--minus); font-weight: 600; padding: 4px 2px 4px 6px; }
+.fixed-list .fixed .del .icon { width: 16px; height: 16px; }
+.fixed-list .fixed .del { align-self: center; }
+.fixed-list .fixed select, .fixed-list .fixed input:not([type="checkbox"]) { min-height: 42px; }
+button.add { background: transparent; border: 1.5px dashed var(--primary); color: var(--primary); }
