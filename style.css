@@ -557,3 +557,15 @@ body.sheet-open { overflow: hidden; }
   .app-header h1.wordmark { background: linear-gradient(135deg, #e6e9ef 0%, #8fb3ff 100%); -webkit-background-clip: text; background-clip: text; }
   .wordmark-dot { color: #8fb3ff; -webkit-text-fill-color: #8fb3ff; }
 }
+
+/* 支払いのツリー: 高さを JS で px 指定して開閉する */
+.folder > .collapse, .folder.open > .collapse { display: block; height: 0; overflow: hidden; transition: height .35s cubic-bezier(.2,.8,.2,1); grid-template-rows: none; }
+.folder .collapse-inner { overflow: visible; }
+.folder.open > .collapse { margin-top: 0; }
+.folder > .collapse > .collapse-inner { margin-top: 2px; }
+
+/* 裏返し: 90°（半分の時間）でちょうど面が入れ替わるよう、前後対称の動きにする */
+.flip-inner { transition: transform .6s cubic-bezier(.45,.05,.55,.95); }
+.flip-front, .flip-back { transition: visibility 0s .3s; }
+.flip.flipped .flip-inner { transform: rotateY(180deg); }
+.flip { perspective: 1200px; }

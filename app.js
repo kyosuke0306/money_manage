@@ -1125,10 +1125,23 @@
   document.body.appendChild(backdrop);
   const accs = [...document.querySelectorAll('.acc-group > details.acc')];
   // 支払いの項目はフォルダにまとめ、押したときだけツリーで開く
-  $('payFolderHead').addEventListener('click', () => {
-    const open = $('payFolder').classList.toggle('open');
+  // 高さは実際の中身の高さ(px)との間で動かす（Safari でも閉じたあと元の大きさに戻るように）
+  const setPayFolder = (open) => {
+    const folder = $('payFolder');
+    const body = folder.querySelector('.collapse');
+    if (folder.classList.contains('open') === open) return;
+    body.style.height = `${open ? 0 : body.scrollHeight}px`;
+    body.getBoundingClientRect(); // 開始の高さを確定させる
+    folder.classList.toggle('open', open);
+    body.style.height = `${open ? body.scrollHeight : 0}px`;
     $('payFolderHead').setAttribute('aria-expanded', open);
+  };
+  $('payFolder').querySelector('.collapse').addEventListener('transitionend', (e) => {
+    if (e.target !== e.currentTarget || e.propertyName !== 'height') return;
+    // 開き終わったら中身に合わせて伸び縮みできるようにする
+    if ($('payFolder').classList.contains('open')) e.currentTarget.style.height = 'auto';
   });
+  $('payFolderHead').addEventListener('click', () => setPayFolder(!$('payFolder').classList.contains('open')));
   const closeSheets = () => {
     accs.forEach((d) => { d.open = false; });
     $('instSheet').hidden = true;
@@ -1182,8 +1195,7 @@
   $('flipFront').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(true); } });
   $('flipBack').addEventListener('click', () => {
     // 表に戻すときは支払いのツリーも閉じて、カードの大きさを元に戻す
-    $('payFolder').classList.remove('open');
-    $('payFolderHead').setAttribute('aria-expanded', false);
+    setPayFolder(false);
     flip(false);
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheets(); });
