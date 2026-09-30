@@ -570,3 +570,23 @@ body.sheet-open { overflow: hidden; }
 /* iPhone の Safari で裏向きの面が透けることがあるため、ちょうど真横（半分の 0.3 秒）で見えない面を隠す */
 .flip-front, .flip-back { visibility: visible; transition: visibility 0s linear .3s; }
 .flip.flipped .flip-front, .flip:not(.flipped) .flip-back { visibility: hidden; }
+
+/* ===== タイトル「Money Manage」 ===== */
+.app-header h1.wordmark { display: flex; align-items: baseline; gap: 6px; font-size: 1.55rem; background: none; color: var(--text); -webkit-text-fill-color: currentColor; }
+.wm-a { font-weight: 800; background: linear-gradient(135deg, #121b45 0%, #1f3fae 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.wm-b { font-weight: 500; letter-spacing: -.02em; color: #3b6cf0; -webkit-text-fill-color: #3b6cf0; }
+@media (prefers-color-scheme: dark) {
+  .app-header h1.wordmark { background: none; }
+  .wm-a { background: linear-gradient(135deg, #e6e9ef, #c9d8ff); -webkit-background-clip: text; background-clip: text; }
+  .wm-b { color: #8fb3ff; -webkit-text-fill-color: #8fb3ff; }
+}
+
+/* ===== 保存の状態（クラウド同期） ===== */
+.sync { display: flex; align-items: center; gap: 5px; height: 30px; padding: 0 11px 0 9px; font-size: .72rem; font-weight: 700; letter-spacing: .02em; border-radius: 999px; background: var(--panel); color: var(--muted); border: 1px solid var(--border); box-shadow: var(--shadow); align-self: center; }
+.sync .icon { width: 15px; height: 15px; }
+.sync.ok .icon { color: var(--plus); }
+.sync.busy .icon { color: var(--primary); animation: sync-spin .9s linear infinite; }
+.sync.error { color: var(--minus); border-color: color-mix(in srgb, var(--minus) 40%, transparent); }
+.sync.login { background: var(--primary); color: #fff; border-color: var(--primary); }
+@keyframes sync-spin { to { transform: rotate(360deg); } }
+.menu-button { align-self: center; }

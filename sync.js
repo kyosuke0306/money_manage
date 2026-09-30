@@ -18,8 +18,15 @@ const firebaseConfig = {
 
 const app = window.moneyApp;
 const button = document.getElementById('syncButton');
+// 状態ごとの小さなアイコン（絵文字は使わない）
+const SYNC_ICONS = {
+  ok: '<path d="M7 18a4.5 4.5 0 0 1-.6-9 6 6 0 0 1 11.4 1.6A3.8 3.8 0 0 1 17.5 18z"/><path d="M9.5 13.2l1.8 1.8 3.4-3.4"/>',
+  busy: '<path d="M12 4a8 8 0 1 1-8 8"/>',
+  error: '<circle cx="12" cy="12" r="8.5"/><path d="M12 8v4.5M12 16h.01"/>',
+  login: '<path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l4-4-4-4M14 12H4"/>',
+};
 const setStatus = (text, cls) => {
-  button.textContent = text;
+  button.innerHTML = `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${SYNC_ICONS[cls] || ''}</svg><span>${text}</span>`;
   button.className = `sync ${cls}`;
 };
 
@@ -35,24 +42,24 @@ let timer = null;
 
 async function upload() {
   if (!user) return;
-  setStatus('☁️ 保存中…', 'busy');
+  setStatus('保存中', 'busy');
   try {
     await setDoc(doc(db, 'users', user.uid), {
       data: JSON.stringify(app.getData()),
       updatedAt: Date.now(),
       device,
     });
-    setStatus('☁️ 保存済み', 'ok');
+    setStatus('保存済み', 'ok');
   } catch (e) {
     console.error(e);
-    setStatus('⚠️ 保存できません', 'error');
+    setStatus('保存できません', 'error');
   }
 }
 
 // 入力が変わったら少し待ってからデータベースに保存する
 app.onChange(() => {
   if (!user) return;
-  setStatus('☁️ 保存中…', 'busy');
+  setStatus('保存中', 'busy');
   clearTimeout(timer);
   timer = setTimeout(upload, 800);
 });
@@ -61,16 +68,16 @@ onAuthStateChanged(auth, async (u) => {
   user = u;
   if (unsubscribe) { unsubscribe(); unsubscribe = null; }
   if (!u) {
-    setStatus('Googleでログイン', 'login');
+    setStatus('ログイン', 'login');
     return;
   }
-  setStatus('☁️ 読み込み中…', 'busy');
+  setStatus('読み込み中', 'busy');
   const ref = doc(db, 'users', u.uid);
   try {
     const snap = await getDoc(ref);
     if (snap.exists()) {
       app.applyData(JSON.parse(snap.data().data));
-      setStatus('☁️ 保存済み', 'ok');
+      setStatus('保存済み', 'ok');
     } else {
       // 初めてのログイン: 今この端末にあるデータをデータベースに移す
       await upload();
@@ -81,11 +88,11 @@ onAuthStateChanged(auth, async (u) => {
       const d = s.data();
       if (d.device === device) return;
       app.applyData(JSON.parse(d.data));
-      setStatus('☁️ 保存済み', 'ok');
+      setStatus('保存済み', 'ok');
     });
   } catch (e) {
     console.error(e);
-    setStatus('⚠️ 読み込めません', 'error');
+    setStatus('読み込めません', 'error');
   }
 });
 
@@ -106,5 +113,5 @@ button.addEventListener('click', async () => {
   }
 });
 
-setStatus('Googleでログイン', 'login');
+setStatus('ログイン', 'login');
 button.hidden = false;

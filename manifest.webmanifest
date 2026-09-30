@@ -1,6 +1,6 @@
 {
-  "name": "Money",
-  "short_name": "Money",
+  "name": "Money Manage",
+  "short_name": "Money Manage",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#f4f6fa",

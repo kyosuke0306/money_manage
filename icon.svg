@@ -9,6 +9,7 @@
   </defs>
   <rect width="512" height="512" rx="112" fill="url(#bg)"/>
   <circle cx="430" cy="82" r="170" fill="#fff" opacity=".08" clip-path="url(#c)"/>
-  <polyline points="103,354 103,159 208,279 313,159 313,354" fill="none" stroke="#fff" stroke-width="58" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="407" cy="351" r="32" fill="#8fb3ff"/>
+  <!-- Money（白・太）と Manage（水色・細）の 2 つの M -->
+  <polyline points="84,340 84,180 154,264 224,180 224,340" fill="none" stroke="#fff" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="298,340 298,180 363,264 428,180 428,340" fill="none" stroke="#8fb3ff" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
