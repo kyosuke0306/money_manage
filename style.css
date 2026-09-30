@@ -567,3 +567,6 @@ body.sheet-open { overflow: hidden; }
 .folder.open > .collapse { margin-top: 0; }
 .folder > .collapse > .collapse-inner { margin-top: 2px; }
 
+/* iPhone の Safari で裏向きの面が透けることがあるため、ちょうど真横（半分の 0.3 秒）で見えない面を隠す */
+.flip-front, .flip-back { visibility: visible; transition: visibility 0s linear .3s; }
+.flip.flipped .flip-front, .flip:not(.flipped) .flip-back { visibility: hidden; }
