@@ -336,7 +336,6 @@ button.add { border-width: 1px; border-radius: 10px; font-size: .9rem; }
 /* ===== ヘッダー（ロゴ＋タイトル＋最終更新） ===== */
 .app-header { background: var(--bg); color: var(--text); padding: 16px 16px 4px; max-width: 560px; margin: 0 auto; }
 .brand { display: flex; align-items: center; gap: 10px; margin-right: auto; min-width: 0; }
-.brand-mark { width: 36px; height: 36px; border-radius: 10px; box-shadow: 0 2px 8px rgba(20,120,70,.25); flex: none; }
 .brand-text { display: flex; flex-direction: column; min-width: 0; }
 .app-header h1 { margin: 0; font-size: 1.05rem; font-weight: 800; letter-spacing: .08em; line-height: 1.2; }
 .app-header .updated { margin: 0; text-align: left; font-size: .68rem; color: var(--muted); letter-spacing: .02em; white-space: nowrap; }
