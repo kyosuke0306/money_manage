@@ -149,7 +149,7 @@ button { cursor: pointer; }
 
 .month-nav { position: relative; text-align: center; font-weight: 700; min-height: 32px; line-height: 32px; }
 .calendar { touch-action: pan-y; cursor: pointer; user-select: none; -webkit-user-select: none; }
-.day.past { background: transparent; border: 1px dashed var(--border); }
+.day.past { background: transparent; opacity: .45; }
 .day .ev.fix { background: #8a5cd6; }
 .day .ev.card { background: transparent; color: var(--muted); border: 1px solid var(--border); }
 
@@ -283,3 +283,70 @@ button.add { background: var(--primary); border-color: var(--primary); color: #f
 .fixed-list .fixed .del { align-self: center; }
 .fixed-list .fixed select, .fixed-list .fixed input:not([type="checkbox"]) { min-height: 42px; }
 button.add { background: transparent; border: 1.5px dashed var(--primary); color: var(--primary); }
+
+/* ===== スマートな見た目（全体の仕上げ） ===== */
+:root { --shadow: 0 1px 2px rgba(20,30,60,.04), 0 4px 16px rgba(20,30,60,.06); --radius: 16px; }
+@media (prefers-color-scheme: dark) { :root { --shadow: none; } }
+body { -webkit-font-smoothing: antialiased; letter-spacing: .01em; }
+
+/* ヘッダー: 背景になじむ軽い見た目 */
+.app-header { background: var(--bg); color: var(--text); padding: 14px 16px 6px; max-width: 560px; margin: 0 auto; }
+.app-header h1 { font-size: 1.15rem; font-weight: 800; letter-spacing: .02em; }
+.menu-button { background: var(--panel); color: var(--text); box-shadow: var(--shadow); border: 1px solid var(--border); border-radius: 10px; }
+.sync { background: var(--panel); color: var(--muted); border: 1px solid var(--border); }
+.sync.login { background: var(--primary); color: #fff; border-color: var(--primary); }
+.sync.error { background: var(--panel); color: var(--minus); border-color: var(--minus); }
+main { padding-top: 8px; }
+
+/* カード: 線ではなく影で区切る */
+.panel { border: none; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 14px; }
+@media (prefers-color-scheme: dark) { .panel { border: 1px solid var(--border); } }
+.panel h2 { font-size: .95rem; font-weight: 700; }
+
+/* 本当の貯金 */
+.savings { padding: 18px 18px 14px; }
+.savings-label { font-weight: 600; letter-spacing: .04em; }
+.savings-amt { font-size: 2.3rem; letter-spacing: -.01em; }
+.savings-sub { border-top-color: var(--border); }
+.savings-sub .savings-label { font-size: .78rem; }
+
+/* 払えなくなる支払い: 左の線と薄い色で控えめに */
+.shortage { border: 1px solid color-mix(in srgb, var(--minus) 30%, transparent); background: color-mix(in srgb, var(--expense-bg) 45%, var(--panel)); box-shadow: none; }
+.shortage h2 { display: flex; align-items: center; gap: 6px; font-size: .9rem; margin-bottom: 6px; }
+.shortage h2 .icon { width: 18px; height: 18px; }
+.shortage li { font-size: .85rem; padding: 8px 0; border-top-color: var(--border); }
+.shortage .lack { font-size: .85rem; }
+
+/* カレンダー */
+.cal-panel { padding-top: 12px; padding-bottom: 12px; }
+.day { border-radius: 8px; }
+.day.today { outline-width: 2px; box-shadow: 0 2px 8px color-mix(in srgb, var(--primary) 25%, transparent); }
+.day .ev { border-radius: 4px; }
+
+/* 入力項目: ひとまとまりのリストにする */
+.acc-group { background: var(--panel); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 14px; }
+@media (prefers-color-scheme: dark) { .acc-group { border: 1px solid var(--border); } }
+.acc-group > .panel { margin: 0; border: none; border-radius: 0; box-shadow: none; }
+.acc-group > .panel + .panel { border-top: 1px solid var(--border); }
+.acc-group > .panel[class*="kind-"] { border-left: none; }
+.acc > summary { padding: 15px 16px; }
+.acc > summary h2 { display: flex; align-items: center; gap: 10px; font-size: .95rem; color: var(--text) !important; }
+.acc > summary h2::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--kind, var(--muted)); flex: none; }
+.acc[open] { background: color-mix(in srgb, var(--kind-bg, var(--bg)) 25%, var(--panel)); }
+.panel h2 small { background: transparent; color: var(--kind); border: 1px solid color-mix(in srgb, var(--kind) 40%, transparent); font-weight: 700; padding: 0 5px; margin-left: 0; }
+.acc .sum-val { color: var(--text); font-weight: 600; opacity: .75; }
+.acc .chev { width: 18px; height: 18px; }
+
+/* 入力欄 */
+input, select { border-radius: 10px; }
+input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent); }
+label { font-size: .76rem; }
+.fixed-list .fixed { background: var(--panel); border-color: var(--border); }
+.fixed-list .fixed input:not([type="checkbox"]):not([type="number"]), .fixed-list .fixed select { background: var(--bg); }
+button.add { border-width: 1px; border-radius: 10px; font-size: .9rem; }
+
+/* バージョン表示は小さく控えめに */
+.version { font-size: .62rem; opacity: .6; border: none; background: transparent; }
+/* 開いた項目の下の余白も背景色に含める */
+.acc-group > .acc[open] { padding-bottom: 16px; }
+.acc-group > .acc > :last-child { margin-bottom: 0; }
