@@ -321,9 +321,7 @@
     const t = today();
     const first = new Date(t.getFullYear(), t.getMonth() + viewMonth, 1);
     const last = new Date(first.getFullYear(), first.getMonth() + 1, 0);
-    $('monthTitle').innerHTML = `<span class="mt-num">${first.getMonth() + 1}</span><span class="mt-unit">月</span><span class="mt-year">${first.getFullYear()}</span>`;
-    // 表示できる3ヶ月のうち、いまどの月かを点で示す
-    $('monthDots').innerHTML = Array.from({ length: MONTHS }, (_, m) => `<i class="${m === viewMonth ? 'on' : ''}"></i>`).join('');
+    $('monthTitle').textContent = `${first.getFullYear()}年${first.getMonth() + 1}月`;
     // その月に分割払いにしたもの（分割払いの記録から）
     const inst = state.installments.filter((it) => it.month === monthKey(first));
     // 分割払いを使った月はマークをオン（押すと記録のポップアップ）
@@ -335,9 +333,9 @@
 
     const cal = $('calendar');
     cal.innerHTML = '';
-    for (const [n, w] of [...'日月火水木金土'].entries()) {
+    for (const w of '日月火水木金土') {
       const h = document.createElement('div');
-      h.className = `wd${n === 0 ? ' sun' : n === 6 ? ' sat' : ''}`;
+      h.className = 'wd';
       h.textContent = w;
       cal.appendChild(h);
     }
@@ -347,7 +345,7 @@
     for (let date = new Date(first); date <= last; date = addDays(date, 1)) {
       const cell = document.createElement('div');
       const dateEl = document.createElement('div');
-      dateEl.className = `date${date.getDay() === 0 ? ' sun' : date.getDay() === 6 ? ' sat' : ''}`;
+      dateEl.className = 'date';
       dateEl.textContent = date.getDate();
       cell.appendChild(dateEl);
 
@@ -917,11 +915,6 @@
     if (next === viewMonth) return;
     viewMonth = next;
     render();
-    // 切り替えた方向からスライドして出てくる
-    const cal = $('calendar');
-    cal.classList.remove('slide-next', 'slide-prev');
-    void cal.offsetWidth;
-    cal.classList.add(delta > 0 ? 'slide-next' : 'slide-prev');
   };
   // カレンダーの左右の端（それぞれ幅の1/4）をタップして月を切り替える
   $('calendar').addEventListener('click', (e) => {
