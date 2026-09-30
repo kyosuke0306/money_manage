@@ -265,3 +265,4 @@ button.add { background: var(--primary); border-color: var(--primary); color: #f
 .inst input[type="month"]::-webkit-date-and-time-value { text-align: left; }
 .month-inst { text-align: center; font-size: .72rem; color: var(--muted); margin-top: -2px; }
 .month-inst[hidden] { display: none; }
+.sub .fc-amount { grid-column: 1 / -1; }

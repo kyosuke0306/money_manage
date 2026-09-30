@@ -45,6 +45,8 @@
       ],
       // 分割払いの記録（計算には使わない。引き落とし額は分割後の金額を入力する）
       installments: [{ id: 'transport-2026-09', month: '2026-09', name: '交通費', times: 3, amount: 39000 }],
+      // サブスクの記録（すべてカードの引き落とし額に含まれているので計算には使わない）
+      subscriptions: [],
       migrations: ['nov-withdrawal', 'scholarship', 'installments'],
       statements: { current: null, history: {} }, // 財務諸表の記録（確定した月を残す）
     };
@@ -773,6 +775,10 @@
     $('instSum').textContent = latest
       ? `${Number(latest.month.split('-')[1])}月 ${latest.name || '分割'} ${latest.times}回${state.installments.length > 1 ? ` ほか${state.installments.length - 1}件` : ''}`
       : 'なし';
+    const subTotal = state.subscriptions.reduce((a, it) => a + num(it.amount), 0);
+    $('subSum').textContent = state.subscriptions.length
+      ? `${state.subscriptions.length}件 月${comma(subTotal)}円`
+      : 'なし';
     $('fixedSum').textContent = `月 ${comma(state.fixedCosts.reduce((a, fc) => a + num(fc.amount), 0))}円`;
   }
 
@@ -1003,6 +1009,56 @@
     });
   }
 
+  // サブスクの記録
+  function renderSubscriptions() {
+    const ul = $('subList');
+    ul.innerHTML = '';
+    const changed = () => { save(); render(); };
+    state.subscriptions.forEach((it) => {
+      const li = document.createElement('li');
+      li.className = 'fixed sub';
+
+      const name = document.createElement('input');
+      name.type = 'text';
+      name.placeholder = 'サービス名';
+      name.value = it.name;
+      name.oninput = () => { it.name = name.value; changed(); };
+
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'del';
+      del.textContent = '削除';
+      del.onclick = () => {
+        state.subscriptions = state.subscriptions.filter((x) => x !== it);
+        save();
+        renderSubscriptions();
+        render();
+      };
+
+      const amount = document.createElement('input');
+      amount.type = 'number';
+      amount.inputMode = 'numeric';
+      amount.min = '0';
+      amount.step = '1';
+      amount.placeholder = '金額';
+      amount.value = it.amount;
+      amount.oninput = () => { it.amount = amount.value; changed(); };
+      const amountLabel = document.createElement('label');
+      amountLabel.className = 'fc-amount';
+      amountLabel.append('月額（円）', amount);
+
+      li.append(name, del, amountLabel);
+      ul.appendChild(li);
+    });
+  }
+
+  $('addSub').addEventListener('click', () => {
+    state.subscriptions.push({ id: Date.now().toString(36), name: '', amount: '' });
+    save();
+    renderSubscriptions();
+    render();
+  });
+
   $('addInst').addEventListener('click', () => {
     state.installments.push({ id: Date.now().toString(36), month: monthKey(today()), name: '', times: 3, amount: '' });
     save();
@@ -1059,6 +1115,7 @@
       renderLabels();
       renderFixedCosts();
       renderInstallments();
+      renderSubscriptions();
       render();
     },
     onChange: (fn) => changeListeners.push(fn),
@@ -1067,5 +1124,6 @@
   renderLabels();
   renderFixedCosts();
   renderInstallments();
+  renderSubscriptions();
   render();
 })();
