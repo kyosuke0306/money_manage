@@ -92,6 +92,15 @@
       }
       data.migrations.push('scholarship');
     }
+    // 前の月の分も未払いなら払う扱いにしたので、これまでの前の月の分は払った扱いにしておく
+    if (!data.migrations.includes('prev-month-paid')) {
+      const t = today();
+      const prev = monthKey(new Date(t.getFullYear(), t.getMonth() - 1, 1));
+      for (const fc of data.fixedCosts) {
+        if (!fc.paid.includes(prev)) fc.paid.push(prev);
+      }
+      data.migrations.push('prev-month-paid');
+    }
     return data;
   }
 
@@ -201,13 +210,14 @@
 
   // 固定費をその日に払う（カードなら使う）か。t = 残高を入力した日
   // 残高を入力した時点でその月の分が未払いのまま支払日を過ぎていたら、入力した日に払う扱いにする
+  // 前の月の分が未払いのまま（家賃を月末に受け取って次の月に払うときなど）も、入力した日に払う扱いにする
   // 土日でずれて前の月の分がこの月に来ることもある
   function fixedCostDue(fc, d, t) {
     for (const i of [-1, 0]) {
       if (fc.paid.includes(monthKey(new Date(d.getFullYear(), d.getMonth() + i, 1)))) continue;
       const due = fixedDueOn(fc, d.getFullYear(), d.getMonth() + i);
       if (due.getTime() === d.getTime()) return d >= t;
-      if (d.getTime() === t.getTime() && due < t && monthKey(due) === monthKey(d)) return true;
+      if (d.getTime() === t.getTime() && due < t) return true;
     }
     return false;
   }
@@ -411,7 +421,6 @@
 
   function renderFixedCosts() {
     const t = today();
-    const key = monthKey(t);
     const ul = $('fixedList');
     ul.innerHTML = '';
     state.fixedCosts.forEach((fc, idx) => {
@@ -448,18 +457,25 @@
         render();
       };
 
-      const paid = document.createElement('label');
-      paid.className = 'paid';
-      const check = document.createElement('input');
-      check.type = 'checkbox';
-      check.checked = fc.paid.includes(key);
-      check.onchange = () => {
-        fc.paid = fc.paid.filter((m) => m !== key);
-        if (check.checked) fc.paid.push(key);
-        save();
-        render();
+      // 前の月の分と今月の分の支払済み（前の月の分を今月に払うこともあるので）
+      const paidCheck = (m) => {
+        const k = monthKey(m);
+        const label = document.createElement('label');
+        label.className = 'paid';
+        const check = document.createElement('input');
+        check.type = 'checkbox';
+        check.checked = fc.paid.includes(k);
+        check.onchange = () => {
+          fc.paid = fc.paid.filter((p) => p !== k);
+          if (check.checked) fc.paid.push(k);
+          save();
+          render();
+        };
+        label.append(check, `${m.getMonth() + 1}月分 支払済み`);
+        return label;
       };
-      paid.append(check, `${t.getMonth() + 1}月分 支払済み`);
+      const prevPaid = paidCheck(new Date(t.getFullYear(), t.getMonth() - 1, 1));
+      const paid = paidCheck(t);
 
       const credit = document.createElement('label');
       credit.className = 'paid';
@@ -491,7 +507,7 @@
 
       const checks = document.createElement('div');
       checks.className = 'checks';
-      checks.append(credit, paid);
+      checks.append(credit, prevPaid, paid);
 
       li.append(name, del, dayLabel, amountLabel, accountLabel, checks);
       ul.appendChild(li);
